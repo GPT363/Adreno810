@@ -30,24 +30,68 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         body: |
-          A8XX Turnip Vulkan V${{ inputs.version }}  
-          Built from: https://github.com/whitebelyash/mesa-tu8
-          
-          >[!WARNING]
-          > This release is still Beta, especially for devices other than Adreno 840. PLEASE, don't report any issues to Mesa
-          > Original merge request is Draft again, so it's not ready
-                    
-          Supports following GPUs:
-          - Adreno 810 (tested, working, less stable than all other GPUs) - sysmem only
-          - Adreno 825 (tested, working with minor glitches compared to A830) - GMEM/sysmem
-          - Adreno 830 (tested, working) - sysmem-only - gmem causes GPU hangs
-          - Adreno 840 (tested, working) - GMEM/sysmem
-          Following GPUs were added but no proper testing was done:
-          - Adreno 829 (no testers were found)
-          
-          GPUs other than 830/840 can have reduced performance and/or more glitches. Can't do anything about that, sorry!  
-          Adreno 810 is additionally very slow, I'm not sure if you even want to use Turnip there
-          
+          Turnip TU8 — Fork of whitebelyashx’s Repository with Adreno 810 Patches
+
+This release is a custom fork of the original work by whitebelyashx, extended with additional patches and optimizations specifically targeted at Adreno 810.
+The build is still in beta testing, and stability may vary depending on the device.
+Please do not report any issues to Mesa, as this is an unofficial fork.
+
+🖥 Supported GPU
+
+Adreno 810
+
+Tested and working
+Less stable than newer Adreno GPUs
+Sysmem‑only (GMEM is unstable on this architecture)
+Includes custom scheduling, compiler, and memory‑related patches
+Performance may vary due to hardware limitations
+📁 Files
+
+gen8 — main branch based on whitebelyashx’s repository, with additional Adreno 810‑specific patches applied.
+
+📝 Changes
+
+Memory & GMEM
+
+GMEM size fixed to 3 MB for Adreno 810
+GMEM path disabled by default (sysmem‑only mode)
+Improved GMEM/sysmem selection logic for stability
+LRZ / Depth Pipeline
+
+LRZ fully disabled for Adreno 810 due to instability and GPU hangs
+Removed LRZ‑related sync points that caused stalls
+Improved depth‑related scheduling behavior
+Scheduler Improvements
+
+Updated chooseinstrdec() and chooseinstrinc() heuristics
+Better prioritization of TEX instructions
+Improved handling of kill‑path instructions
+Reduced unnecessary stalls caused by SS/SY dependencies
+Improved live‑range heuristics to reduce register pressure
+Compiler / IR3
+
+Adjusted NIR → IR3 lowering to reduce collect/split usage
+Reduced number of redundant MOV instructions
+Improved ALU chain generation
+Updated delay slot calculations for TEX/SFU
+Reduced soft‑latency penalties to improve throughput
+General Adreno 810 Optimizations
+
+Stability fixes for sysmem rendering
+Reduced bandwidth usage in heavy scenes
+Improved behavior with multiple MRTs
+Adjusted tile‑size logic for better performance
+Various small fixes and tuning for shader compilation and scheduling
+⚠️ Notes
+
+If you see black artifacts, disable the HUD:
+DXVK_HUD=0
+Some emulators (e.g., Eden) may show instability — increasing render scale may help.
+Certain games may require AMD/NVIDIA GPUs to unlock specific features.
+A Steam Deck emulation patch is included:
+TUDEBUG=deckemu
+If the driver is too unstable, enable:
+TU_DEBUG=nolrz
           Files:
           * gen8 - main branch (upstream MR + hacks applied)
           
