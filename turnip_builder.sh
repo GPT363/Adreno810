@@ -143,9 +143,9 @@ EOF
 	cat <<EOF >"meta.json"
 {
   "schemaVersion": 1,
-  "name": "A8XX Turnip v$BUILD_VERSION",
-  "description": "Сборка для Adreno 810/825/830/840. Ветка: $1",
-  "author": "whitebelyash / Adreno810-Tester",
+  "name": "A810 Turnip Version",
+  "description": "Сборка для Adreno 810. Ветка: $1",
+  "author": "whitebelyash / DVD_Disk",
   "packageVersion": "1",
   "vendor": "Mesa",
   "driverVersion": "Vulkan 1.4.335",
