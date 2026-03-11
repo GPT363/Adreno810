@@ -143,7 +143,7 @@ EOF
 	cat <<EOF >"meta.json"
 {
   "schemaVersion": 1,
-  "name": "A810 Turnip Version",
+  "name": "A810 Turnip Version-$BUILD_VERSION",
   "description": "Сборка для Adreno 810. Ветка: $1",
   "author": "whitebelyash / DVD_Disk",
   "packageVersion": "1",
@@ -153,10 +153,10 @@ EOF
   "libraryName": "libvulkan_freedreno.so"
 }
 EOF
-	zip /tmp/a8xx-$1-V$BUILD_VERSION.zip libvulkan_freedreno.so meta.json
+	zip /tmp/a810_only-$1-V$BUILD_VERSION.zip libvulkan_freedreno.so meta.json
 	cd -
 	
-	if [ -f /tmp/a8xx-$1-V$BUILD_VERSION.zip ]; then
+	if [ -f /tmp/a810_only-$1-V$BUILD_VERSION.zip ]; then
 		echo -e "$green Архив успешно создан: /tmp/a8xx-$1-V$BUILD_VERSION.zip $nocolor"
 	else
 		echo -e "$red Не удалось упаковать архив! $nocolor"
