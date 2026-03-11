@@ -53,35 +53,6 @@ gen8 — main branch based on whitebelyashx’s repository, with additional Adre
 
 Memory & GMEM
 
-GMEM size fixed to 3 MB for Adreno 810
-GMEM path disabled by default (sysmem‑only mode)
-Improved GMEM/sysmem selection logic for stability
-LRZ / Depth Pipeline
-
-LRZ fully disabled for Adreno 810 due to instability and GPU hangs
-Removed LRZ‑related sync points that caused stalls
-Improved depth‑related scheduling behavior
-Scheduler Improvements
-
-Updated chooseinstrdec() and chooseinstrinc() heuristics
-Better prioritization of TEX instructions
-Improved handling of kill‑path instructions
-Reduced unnecessary stalls caused by SS/SY dependencies
-Improved live‑range heuristics to reduce register pressure
-Compiler / IR3
-
-Adjusted NIR → IR3 lowering to reduce collect/split usage
-Reduced number of redundant MOV instructions
-Improved ALU chain generation
-Updated delay slot calculations for TEX/SFU
-Reduced soft‑latency penalties to improve throughput
-General Adreno 810 Optimizations
-
-Stability fixes for sysmem rendering
-Reduced bandwidth usage in heavy scenes
-Improved behavior with multiple MRTs
-Adjusted tile‑size logic for better performance
-Various small fixes and tuning for shader compilation and scheduling
 ⚠️ Notes
 
 If you see black artifacts, disable the HUD:
@@ -94,14 +65,12 @@ If the driver is too unstable, enable:
 TU_DEBUG=nolrz
           Files:
           * gen8 - main branch (upstream MR + hacks applied)
-          
           Notes:
           * Disable DXVK_HUD if you see weird black artifacts
           * Apparently there are swizzling glitches in Eden & maybe other emulators, try increasing render scale(?)
           * Some games may require AMD/NVIDIA GPU to run and refuse to start on Qualcomm or block some features. I've included a patch to spoof as Steam Deck - use `TU_DEBUG=deck_emu`
           * If too unstable - activate nolrz: `TU_DEBUG=nolrz`.
-
         tag_name: tu_v${{ inputs.version }}
-        name: Turnip A8XX v${{ inputs.version }}
+        name: Turnip A810_only v${{ inputs.version }}
         files: |
-           /tmp/a8xx-gen8-V${{ inputs.version }}.zip
+           /tmp/a810_only-gen8-V${{ inputs.version }}.zip
