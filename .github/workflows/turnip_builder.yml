@@ -28,7 +28,7 @@ jobs:
 
     - name: Release "turnip"
       uses: softprops/action-gh-release@v1
-      with:
+    - with:
         body: |
           Turnip TU8 — Fork of whitebelyashx’s Repository with Adreno 810 Patches
 
