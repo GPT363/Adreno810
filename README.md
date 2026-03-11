@@ -1,5 +1,5 @@
 
-# Mesa для Adreno 810 (ветка gen8)
+# Mesa для Adreno 810 (Ветка main)
 Код создан для устройств на основе процессосоров: 
 Qualcomm Snapdragon 6 gen 4 
 Qualcomm Snapdragon 7s gen 3 
@@ -15,3 +15,4 @@ Qualcomm Snapdragon 7s gen 4
 Активная разработка. Код может часто меняться и содержать экспериментальные правки.
 
 *ПРИМЕЧАНИЕ* В ветке gen8 от whitebelyashx уже имеется поддержка Adreno 810, моя цель улучшить стабильность, это неофицальный форк.
+Основной репозиторий, на котором основывается этот: https://github.com/whitebelyash/mesa-tu8
