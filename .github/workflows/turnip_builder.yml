@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       BUILD_VERSION: ${{ inputs.version }}
+
     steps:
     - uses: actions/checkout@v3
 
@@ -21,14 +22,16 @@ jobs:
         sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
         sudo apt update
         sudo apt install build-essential flex bison glslang-tools
-        sudo apt install meson-1.5 
+        sudo apt install meson-1.5
 
     - name: Execute build script
       run: bash ./turnip_builder.sh
 
     - name: Release "turnip"
       uses: softprops/action-gh-release@v1
-    - with:
+      with:
+        tag_name: tu_v${{ inputs.version }}
+        name: Turnip A810_only v${{ inputs.version }}
         body: |
           Turnip TU8 — Fork of whitebelyashx’s Repository with Adreno 810 Patches
 
@@ -36,41 +39,18 @@ jobs:
           The build is still in beta testing, and stability may vary depending on the device.
           Please do not report any issues to Mesa, as this is an unofficial fork.
 
-               🖥 Supported GPU
+          🖥 Supported GPU
+          • Adreno 810 — sysmem-only, tested, includes custom patches.
 
-               Adreno 810
+          📝 Changes
+          (fill manually)
 
-         Tested and working
-         Less stable than newer Adreno GPUs
-         Sysmem‑only (GMEM is unstable on this architecture)
-         Includes custom scheduling, compiler, and memory‑related patches
-         Performance may vary due to hardware limitations
-                📁 Files
+          ⚠️ Notes
+          • If you see black artifacts, disable DXVK_HUD=0
+          • Eden and some emulators may require higher render scale
+          • Some games may require AMD/NVIDIA GPUs
+          • Steam Deck spoof: TU_DEBUG=deck_emu
+          • If unstable: TU_DEBUG=nolrz
 
-         gen8 — main branch based on whitebelyashx’s repository, with additional Adreno 810‑specific patches applied.
-
-                📝 Changes
-
-             
-
-                 ⚠️ Notes
-
-        If you see black artifacts, disable the HUD:
-         DXVK_HUD=0
-         Some emulators (e.g., Eden) may show instability — increasing render scale may help.
-         Certain games may require AMD/NVIDIA GPUs to unlock specific features.
-       A Steam Deck emulation patch is included:
-        TUDEBUG=deckemu
-       If the driver is too unstable, enable:
-         TU_DEBUG=nolrz
-          Files:
-          * gen8 - main branch (upstream MR + hacks applied)
-          Notes:
-          * Disable DXVK_HUD if you see weird black artifacts
-          * Apparently there are swizzling glitches in Eden & maybe other emulators, try increasing render scale(?)
-          * Some games may require AMD/NVIDIA GPU to run and refuse to start on Qualcomm or block some features. I've included a patch to spoof as Steam Deck - use `TU_DEBUG=deck_emu`
-          * If too unstable - activate nolrz: `TU_DEBUG=nolrz`.
-        tag_name: tu_v${{ inputs.version }}
-        name: Turnip A810_only v${{ inputs.version }}
         files: |
-           /tmp/a810_only-gen8-V${{ inputs.version }}.zip
+          /tmp/a810_only-gen8-V${{ inputs.version }}.zip
