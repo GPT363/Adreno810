@@ -32,37 +32,37 @@ jobs:
         body: |
           Turnip TU8 — Fork of whitebelyashx’s Repository with Adreno 810 Patches
 
-This release is a custom fork of the original work by whitebelyashx, extended with additional patches and optimizations specifically targeted at Adreno 810.
-The build is still in beta testing, and stability may vary depending on the device.
-Please do not report any issues to Mesa, as this is an unofficial fork.
+          This release is a custom fork of the original work by whitebelyashx, extended with additional patches and optimizations specifically targeted at Adreno 810.
+          The build is still in beta testing, and stability may vary depending on the device.
+          Please do not report any issues to Mesa, as this is an unofficial fork.
 
-🖥 Supported GPU
+               🖥 Supported GPU
 
-Adreno 810
+               Adreno 810
 
-Tested and working
-Less stable than newer Adreno GPUs
-Sysmem‑only (GMEM is unstable on this architecture)
-Includes custom scheduling, compiler, and memory‑related patches
-Performance may vary due to hardware limitations
-📁 Files
+         Tested and working
+         Less stable than newer Adreno GPUs
+         Sysmem‑only (GMEM is unstable on this architecture)
+         Includes custom scheduling, compiler, and memory‑related patches
+         Performance may vary due to hardware limitations
+                📁 Files
 
-gen8 — main branch based on whitebelyashx’s repository, with additional Adreno 810‑specific patches applied.
+         gen8 — main branch based on whitebelyashx’s repository, with additional Adreno 810‑specific patches applied.
 
-📝 Changes
+                📝 Changes
 
-Memory & GMEM
+             
 
-⚠️ Notes
+                 ⚠️ Notes
 
-If you see black artifacts, disable the HUD:
-DXVK_HUD=0
-Some emulators (e.g., Eden) may show instability — increasing render scale may help.
-Certain games may require AMD/NVIDIA GPUs to unlock specific features.
-A Steam Deck emulation patch is included:
-TUDEBUG=deckemu
-If the driver is too unstable, enable:
-TU_DEBUG=nolrz
+        If you see black artifacts, disable the HUD:
+         DXVK_HUD=0
+         Some emulators (e.g., Eden) may show instability — increasing render scale may help.
+         Certain games may require AMD/NVIDIA GPUs to unlock specific features.
+       A Steam Deck emulation patch is included:
+        TUDEBUG=deckemu
+       If the driver is too unstable, enable:
+         TU_DEBUG=nolrz
           Files:
           * gen8 - main branch (upstream MR + hacks applied)
           Notes:
