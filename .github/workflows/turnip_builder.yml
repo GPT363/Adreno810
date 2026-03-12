@@ -33,24 +33,17 @@ jobs:
         tag_name: tu_v${{ inputs.version }}
         name: Turnip A810_only v${{ inputs.version }}
         body: |
-          Turnip TU8 — Fork of whitebelyashx’s Repository with Adreno 810 Patches
+          Turnip TU8 — Autotuner branch build for Adreno 810.
 
-          This release is a custom fork of the original work by whitebelyashx, extended with additional patches and optimizations specifically targeted at Adreno 810.
-          The build is still in beta testing, and stability may vary depending on the device.
-          Please do not report any issues to Mesa, as this is an unofficial fork.
+          This release is based on the Autotuner branch with experimental optimizations.
+          Stability may vary depending on device.
 
           🖥 Supported GPU
-          • Adreno 810 — sysmem-only, tested, includes custom patches.
-
-          📝 Changes
-          (fill manually)
+          • Adreno 810 — sysmem-only, tuned.
 
           ⚠️ Notes
           • If you see black artifacts, disable DXVK_HUD=0
-          • Eden and some emulators may require higher render scale
-          • Some games may require AMD/NVIDIA GPUs
-          • Steam Deck spoof: TU_DEBUG=deck_emu
-          • If unstable: TU_DEBUG=nolrz
+          • TU_DEBUG=nolrz may help in unstable games
 
         files: |
-          /tmp/a810_only-gen8-V${{ inputs.version }}.zip
+          /tmp/a810_only-Autotuner-V${{ inputs.version }}.zip
