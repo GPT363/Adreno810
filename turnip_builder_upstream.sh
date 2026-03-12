@@ -62,11 +62,12 @@ build_lib_for_android(){
 	wget https://github.com/whitebelyash/mesa-tu8/releases/download/patchset-head-v2/$2
 
 	echo "Applying patchset..."
-	if ! git apply --check $2; then
-		echo "Patch failed!"
-		exit 1
+	if git apply --check $2; then
+		echo "Patch OK, applying..."
+		git apply $2
+	else
+		echo "Patch does not apply, skipping..."
 	fi
-	git apply $2
 
 	mkdir -p "$workdir/bin"
 	ln -sf "$ndk/clang" "$workdir/bin/cc"
@@ -144,7 +145,7 @@ EOF
 {
   "schemaVersion": 1,
   "name": "A810 Turnip Version-$BUILD_VERSION",
-  "description": "Upstream Mesa Turnip build (A810 Only, with whitebelyash patchset)",
+  "description": "Upstream Mesa Turnip build (A810 Only, with whitebelyash patchset if applicable)",
   "author": "DVD_Disk",
   "packageVersion": "1",
   "vendor": "Mesa",
