@@ -1,4 +1,4 @@
-name: Build Mesa-git
+name: Build Mesa-git (A810 Only)
 
 on:
   workflow_dispatch:
@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       BUILD_VERSION: ${{ inputs.version }}
+
     steps:
     - uses: actions/checkout@v3
 
@@ -21,7 +22,7 @@ jobs:
         sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
         sudo apt update
         sudo apt install build-essential flex bison glslang-tools
-        sudo apt install meson-1.5 
+        sudo apt install meson-1.5
 
     - name: Execute build script
       run: bash ./turnip_builder_upstream.sh
@@ -29,19 +30,19 @@ jobs:
     - name: Release "turnip"
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: a810_v${{ inputs.version }}
+        name: Mesa Turnip A810 Only v${{ inputs.version }}
         body: |
-          Mesa Turnip V${{ inputs.version }}  
-          Built from: https://gitlab.freedesktop.org/mesa/mesa
-          
-          >[!WARNING]
-          > GPUs other than A830/A840 may work unstable!
+          Mesa Turnip (A810 Only)
+          Version: ${{ inputs.version }}
 
-          This is a build of current upstream Mesa with my GPU enablement hacks applied
-          
+          Built from upstream Mesa (main branch)
+          Optimized and restricted specifically for Adreno 810.
 
-        tag_name: mesa_v${{ inputs.version }}
-        name: Mesa Turnip v${{ inputs.version }}
+          ⚠️ WARNING
+          • Does NOT support A830/A840/A825/A829
+          • Sysmem-only rendering
+          • Optimized for Winlator/DXVK/VKD3D workloads
+
         files: |
-           /tmp/mesa-turnip-main-V${{ inputs.version }}.zip
-           /tmp/mesa-turnip-main-V${{ inputs.version }}.zip
-
+          /tmp/a810_only-main-V${{ inputs.version }}.zip
