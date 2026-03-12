@@ -37,10 +37,11 @@ jobs:
           Version: ${{ inputs.version }}
 
           Built from upstream Mesa (main branch)
-          Optimized and restricted specifically for Adreno 810.
+          Includes whitebelyash patchset (KGSL enablement)
+          Compiled with DVD_Disk A810-only optimizations.
 
           ⚠️ WARNING
-          • Does NOT support A830/A840/A825/A829
+          • Works ONLY on Adreno 810
           • Sysmem-only rendering
           • Optimized for Winlator/DXVK/VKD3D workloads
 
