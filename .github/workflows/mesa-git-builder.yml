@@ -1,49 +1,32 @@
-name: Build Mesa-git (A810 Only)
+name: Build Mesa-git (GPT363)
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to build'
+        description: 'Версия сборки (например, 1.0)'
         required: true
         type: string
 
 jobs:
-  start_building_turnip:
+  build:
     runs-on: ubuntu-24.04
     env:
       BUILD_VERSION: ${{ inputs.version }}
-
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Prepare environment
-      run: |
-        sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
-        sudo apt update
-        sudo apt install build-essential flex bison glslang-tools
-        sudo apt install meson-1.5
-
-    - name: Execute build script
+    - name: Run Build Script
       run: bash ./turnip_builder_upstream.sh
 
-    - name: Release "turnip"
+    - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: a810_v${{ inputs.version }}
-        name: Mesa Turnip A810 Only v${{ inputs.version }}
+        tag_name: v${{ inputs.version }}
+        name: Mesa Turnip Gen8 v${{ inputs.version }}
         body: |
-          Mesa Turnip (A810 Only)
-          Version: ${{ inputs.version }}
-
-          Built from upstream Mesa (main branch)
-          Includes whitebelyash patchset (KGSL enablement)
-          Compiled with DVD_Disk A810-only optimizations.
-
-          ⚠️ WARNING
-          • Works ONLY on Adreno 810
-          • Sysmem-only rendering
-          • Optimized for Winlator/DXVK/VKD3D workloads
-
-        files: |
-          /tmp/a810_only-main-V${{ inputs.version }}.zip
+          Сборка на основе последнего коммита Mesa GitLab.
+          Целевое устройство: Adreno 810 (Gen8).
+          Использованы хаки для активации GPU.
+        files: /tmp/mesa-turnip-gen8-V${{ inputs.version }}.zip
+        
