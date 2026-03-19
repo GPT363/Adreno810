@@ -1,4 +1,4 @@
-name:  Create Patches from Your Changes
+name:  Create Patches from my Changes
 
 on:
   workflow_dispatch:
@@ -23,13 +23,13 @@ jobs:
         fetch-depth: 0
         path: your-repo
 
-    - name: Clone whitebelyashx/mesa-tu8 (using git clone with auth)
+    - name: Clone whitebelyash/mesa-tu8
       run: |
-        # Используем клон без авторизации (публичный репозиторий)
-        git clone https://github.com/whitebelyashx/mesa-tu8.git whitebelyash-repo || \
-        git clone git://github.com/whitebelyashx/mesa-tu8.git whitebelyash-repo || \
+        git clone https://github.com/whitebelyash/mesa-tu8.git whitebelyash-repo || \
+        git clone git://github.com/whitebelyash/mesa-tu8.git whitebelyash-repo || \
         {
-          echo " Failed to clone whitebelyashx/mesa-tu8"
+          echo "Failed to clone whitebelyash/mesa-tu8"
+          echo "Try: https://github.com/whitebelyash/mesa-tu8"
           exit 1
         }
         
@@ -41,46 +41,54 @@ jobs:
       run: |
         cd your-repo
         
-        # Добавляем whitebelyash как remote
-        git remote add whitebelyash https://github.com/whitebelyashx/mesa-tu8.git
+        git remote add whitebelyash https://github.com/whitebelyash/mesa-tu8.git
         git fetch whitebelyash --depth=100 || git fetch whitebelyash
         
-        # Находим точку расхождения
         BASE=$(git merge-base HEAD whitebelyash/main || echo "")
         
         if [ -n "$BASE" ]; then
           echo "BASE_COMMIT=$BASE" >> $GITHUB_ENV
-          echo " Found common ancestor: $BASE"
+          echo "Found common ancestor: $BASE"
         else
-          # Если не нашли - пробуем найти через историю
           echo "Could not find common ancestor, checking first commits..."
           
-          # Берём первый коммит whitebelyash
           cd ../whitebelyash-repo
           WB_FIRST=$(git rev-list --max-parents=0 HEAD)
           cd ../your-repo
           
           echo "BASE_COMMIT=$WB_FIRST" >> $GITHUB_ENV
-          echo " Using whitebelyash first commit: $WB_FIRST"
+          echo "Using whitebelyash first commit: $WB_FIRST"
         fi
         
-        echo "Your latest commit: $(git rev-parse HEAD)"
+        echo "Your latest commit: $(git rev-parse HEAD)" >> ../whitebelyash-info.txt
 
     - name: Create mega patch (ALL changes in one file)
       run: |
         cd your-repo
         mkdir -p ../patches
         
-        # Создаём ОДИН большой патч со ВСЕМИ изменениями
-        echo " Creating mega patch with ALL changes..."
+        echo "Creating mega patch with ALL changes..."
         git diff $BASE_COMMIT..HEAD > ../patches/a810-complete.patch
         
-        # Создаём также список изменённых файлов
         git diff --name-only $BASE_COMMIT..HEAD > ../patches/changed-files.txt
         
-        # Статистика
-        echo " Changes statistics:" >> ../patches/README.md
-        git diff --stat $BASE_COMMIT..HEAD >> ../patches/README.md
+        {
+          echo "# A810 Patches vs whitebelyash/mesa-tu8"
+          echo ""
+          echo "## Information"
+          echo "- Your latest commit: $(git rev-parse HEAD)"
+          echo "- Whitebelyash commit: $(cat ../whitebelyash-commit.txt)"
+          echo ""
+          echo "## Changed files"
+          echo '```'
+          cat ../patches/changed-files.txt
+          echo '```'
+          echo ""
+          echo "## Changes statistics"
+          echo '```'
+          git diff --stat $BASE_COMMIT..HEAD
+          echo '```'
+        } > ../patches/README.md
 
     - name: Upload patch as artifact
       uses: actions/upload-artifact@v4
@@ -94,29 +102,27 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: a810-patch-${{ github.run_number }}
-        name: " A810 Mega Patch #${{ github.run_number }}"
+        name: "A810 Mega Patch #${{ github.run_number }}"
         body: |
-          ##  ОДИН БОЛЬШОЙ ПАТЧ СО ВСЕМИ ИЗМЕНЕНИЯМИ
+          ONE BIG PATCH WITH ALL CHANGES
 
-          ### 🔧 Как использовать:
-          ```bash
-          # Скачай свежий Mesa
+          How to use:
+          ```
           git clone https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
-          
-          # Примени патч
           git apply /path/to/a810-complete.patch
-          
-          # Собери
           meson setup build
           ninja -C build
           ```
 
-          ### Статистика:
-          $(cat patches/README.md)
+          Statistics:
+          - Your commit: $(cd your-repo && git rev-parse HEAD)
+          - Whitebelyash commit: $(cat whitebelyash-commit.txt || echo "unknown")
+          - Total files: $(cat patches/changed-files.txt | wc -l)
 
-          ### Изменённые файлы:
-          $(cat patches/changed-files.txt | sed 's/^/- `/; s/$/`/')
+          Changed files:
+          $(cat patches/changed-files.txt | sed 's/^/- /')
         files: |
           patches/a810-complete.patch
           patches/changed-files.txt
+          patches/README.md
