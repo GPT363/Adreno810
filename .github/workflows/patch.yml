@@ -1,10 +1,10 @@
-name: Create Patches vs whitebelyashx/mesa-tu8 (All Files)
+name:  Create Patches from Your Changes
 
 on:
   workflow_dispatch:
     inputs:
       create_release:
-        description: 'Create GitHub Release'
+        description: 'Create GitHub Release with patches'
         required: true
         default: true
         type: boolean
@@ -17,15 +17,22 @@ jobs:
       actions: write
     
     steps:
-    - name: Checkout your repository (full history)
+    - name: Checkout your repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         path: your-repo
 
-    - name: Clone whitebelyashx/mesa-tu8
+    - name: Clone whitebelyashx/mesa-tu8 (using git clone with auth)
       run: |
-        git clone https://github.com/whitebelyashx/mesa-tu8.git whitebelyash-repo
+        # Используем клон без авторизации (публичный репозиторий)
+        git clone https://github.com/whitebelyashx/mesa-tu8.git whitebelyash-repo || \
+        git clone git://github.com/whitebelyashx/mesa-tu8.git whitebelyash-repo || \
+        {
+          echo " Failed to clone whitebelyashx/mesa-tu8"
+          exit 1
+        }
+        
         cd whitebelyash-repo
         echo "Whitebelyash latest commit: $(git rev-parse HEAD)" > ../whitebelyash-info.txt
         git rev-parse HEAD > ../whitebelyash-commit.txt
@@ -33,232 +40,83 @@ jobs:
     - name: Find common ancestor
       run: |
         cd your-repo
-        git remote add whitebelyash https://github.com/whitebelyashx/mesa-tu8.git
-        git fetch whitebelyash
         
-        # Пробуем найти общий коммит
+        # Добавляем whitebelyash как remote
+        git remote add whitebelyash https://github.com/whitebelyashx/mesa-tu8.git
+        git fetch whitebelyash --depth=100 || git fetch whitebelyash
+        
+        # Находим точку расхождения
         BASE=$(git merge-base HEAD whitebelyash/main || echo "")
         
         if [ -n "$BASE" ]; then
           echo "BASE_COMMIT=$BASE" >> $GITHUB_ENV
-          echo "✅ Found common ancestor: $BASE"
+          echo " Found common ancestor: $BASE"
         else
-          # Если нет общего - используем первый коммит whitebelyash
+          # Если не нашли - пробуем найти через историю
+          echo "Could not find common ancestor, checking first commits..."
+          
+          # Берём первый коммит whitebelyash
           cd ../whitebelyash-repo
           WB_FIRST=$(git rev-list --max-parents=0 HEAD)
           cd ../your-repo
+          
           echo "BASE_COMMIT=$WB_FIRST" >> $GITHUB_ENV
-          echo "⚠️ Using whitebelyash first commit: $WB_FIRST"
+          echo " Using whitebelyash first commit: $WB_FIRST"
         fi
+        
+        echo "Your latest commit: $(git rev-parse HEAD)"
 
-    - name: Find ALL changed files
-      id: find-files
+    - name: Create mega patch (ALL changes in one file)
       run: |
         cd your-repo
         mkdir -p ../patches
-        mkdir -p ../patches/clean
-        mkdir -p ../patches/stats
         
-        # Находим ВСЕ изменённые файлы (включая новые и удалённые)
-        echo "🔍 Searching for ALL changed files..."
+        # Создаём ОДИН большой патч со ВСЕМИ изменениями
+        echo " Creating mega patch with ALL changes..."
+        git diff $BASE_COMMIT..HEAD > ../patches/a810-complete.patch
         
-        # Полный список всех изменений
-        git diff --name-only $BASE_COMMIT..HEAD > ../patches/all-changed-files.txt
-        git diff --name-status $BASE_COMMIT..HEAD > ../patches/all-changes-status.txt
+        # Создаём также список изменённых файлов
+        git diff --name-only $BASE_COMMIT..HEAD > ../patches/changed-files.txt
         
-        # Новые файлы (которых не было у whitebelyash)
-        git diff --diff-filter=A --name-only $BASE_COMMIT..HEAD > ../patches/new-files.txt
-        
-        # Удалённые файлы (которые были у whitebelyash, но ты удалил)
-        git diff --diff-filter=D --name-only $BASE_COMMIT..HEAD > ../patches/deleted-files.txt
-        
-        # Изменённые файлы
-        git diff --diff-filter=M --name-only $BASE_COMMIT..HEAD > ../patches/modified-files.txt
-        
-        # Переименованные файлы
-        git diff --diff-filter=R --name-only $BASE_COMMIT..HEAD > ../patches/renamed-files.txt
-        
-        # Считаем статистику
-        TOTAL_FILES=$(wc -l < ../patches/all-changed-files.txt)
-        echo "TOTAL_FILES=$TOTAL_FILES" >> $GITHUB_ENV
-        echo "✅ Найдено файлов с изменениями: $TOTAL_FILES"
+        # Статистика
+        echo " Changes statistics:" >> ../patches/README.md
+        git diff --stat $BASE_COMMIT..HEAD >> ../patches/README.md
 
-    - name: Create patches for ALL files
-      run: |
-        cd your-repo
-        
-        # Инициализируем счётчики
-        TOTAL_ADDITIONS=0
-        TOTAL_DELETIONS=0
-        PROCESSED_FILES=0
-        
-        # Создаём чистый патч для КАЖДОГО изменённого файла
-        while IFS= read -r file; do
-          if [ -n "$file" ]; then
-            PROCESSED_FILES=$((PROCESSED_FILES + 1))
-            echo "[$PROCESSED_FILES/$TOTAL_FILES] Processing: $file"
-            
-            # Создаём безопасное имя файла (заменяем / на _)
-            SAFE_NAME=$(echo "$file" | sed 's/\//_/g')
-            
-            # Создаём патч с финальными изменениями для этого файла
-            git diff $BASE_COMMIT..HEAD -- "$file" > "../patches/clean/${SAFE_NAME}.diff"
-            
-            # Считаем статистику для этого файла
-            if [ -s "../patches/clean/${SAFE_NAME}.diff" ]; then
-              STATS=$(git diff --numstat $BASE_COMMIT..HEAD -- "$file")
-              ADDITIONS=$(echo "$STATS" | awk '{print $1}')
-              DELETIONS=$(echo "$STATS" | awk '{print $2}')
-              
-              # Если файл новый или удалённый, числа могут отсутствовать
-              ADDITIONS=${ADDITIONS:-0}
-              DELETIONS=${DELETIONS:-0}
-              
-              TOTAL_ADDITIONS=$((TOTAL_ADDITIONS + ADDITIONS))
-              TOTAL_DELETIONS=$((TOTAL_DELETIONS + DELETIONS))
-              
-              # Сохраняем статистику
-              echo "$file | $ADDITIONS | $DELETIONS | $SAFE_NAME.diff" >> ../patches/stats/details.txt
-            fi
-          fi
-        done < ../patches/all-changed-files.txt
-        
-        # Сохраняем общую статистику
-        echo "TOTAL_ADDITIONS=$TOTAL_ADDITIONS" >> $GITHUB_ENV
-        echo "TOTAL_DELETIONS=$TOTAL_DELETIONS" >> $GITHUB_ENV
-        
-        # Создаём общий патч со ВСЕМИ изменениями
-        echo "📦 Creating total patch with ALL changes..."
-        git diff $BASE_COMMIT..HEAD > ../patches/total-vs-whitebelyash.patch
-
-    - name: Create detailed README with ALL files
-      run: |
-        cd patches
-        cat > README.md << 'EOF'
-        # 🎯 ПОЛНЫЕ ПАТЧИ ДЛЯ ADRENO 810
-
-        ## 📊 Общая информация
-
-        - **Всего изменённых файлов:** ${{ env.TOTAL_FILES }}
-        - **Добавлено строк:** ${{ env.TOTAL_ADDITIONS }}
-        - **Удалено строк:** ${{ env.TOTAL_DELETIONS }}
-        - **Чистый прирост:** $((TOTAL_ADDITIONS - TOTAL_DELETIONS)) строк
-
-        ## 📦 Структура
-
-        ```
-        patches/
-        ├── README.md                          # этот файл
-        ├── total-vs-whitebelyash.patch        # ВСЕ изменения в одном файле
-        ├── clean/                              # по одному патчу на файл
-        │   ├── src_freedreno_vulkan_tu_cmd_buffer.cc.diff
-        │   ├── src_freedreno_common_freedreno_devices.py.diff
-        │   └── ...
-        ├── stats/                              # статистика
-        │   └── details.txt                     # детали по каждому файлу
-        ├── all-changed-files.txt               # полный список файлов
-        ├── all-changes-status.txt              # статус каждого файла
-        ├── new-files.txt                       # новые файлы
-        ├── deleted-files.txt                    # удалённые файлы
-        ├── modified-files.txt                   # изменённые файлы
-        └── renamed-files.txt                    # переименованные файлы
-        ```
-
-        ## 🔧 Как использовать
-
-        ### Вариант 1: Применить всё сразу
-        ```bash
-        git clone https://gitlab.freedesktop.org/mesa/mesa.git
-        cd mesa
-        git apply /path/to/patches/total-vs-whitebelyash.patch
-        ```
-
-        ### Вариант 2: Применить отдельные файлы
-        ```bash
-        cd mesa
-        git apply /path/to/patches/clean/src_freedreno_vulkan_tu_cmd_buffer.cc.diff
-        git apply /path/to/patches/clean/src_freedreno_common_freedreno_devices.py.diff
-        ```
-
-        ### Вариант 3: Посмотреть, какие файлы менялись
-        ```bash
-        cat /path/to/patches/all-changed-files.txt
-        ```
-
-        ## 📋 Полный список изменённых файлов
-        EOF
-        
-        echo "" >> README.md
-        echo "### Всего файлов: $TOTAL_FILES" >> README.md
-        echo "" >> README.md
-        echo "| Файл | Статус | + строк | - строк |" >> README.md
-        echo "|------|--------|---------|---------|" >> README.md
-        
-        # Добавляем информацию о каждом файле
-        if [ -f all-changes-status.txt ]; then
-          while IFS= read -r line; do
-            STATUS=$(echo "$line" | awk '{print $1}')
-            FILE=$(echo "$line" | awk '{print $2}')
-            
-            # Ищем статистику для этого файла
-            STATS=$(grep -F "$FILE" stats/details.txt 2>/dev/null | head -1)
-            if [ -n "$STATS" ]; then
-              ADD=$(echo "$STATS" | awk '{print $2}')
-              DEL=$(echo "$STATS" | awk '{print $3}')
-              echo "| \`$FILE\` | $STATUS | $ADD | $DEL |" >> README.md
-            else
-              echo "| \`$FILE\` | $STATUS | - | - |" >> README.md
-            fi
-          done < all-changes-status.txt
-        fi
-
-    - name: Upload ALL patches as artifacts
-      uses: actions/upload-artifact@v4  # 👈 ИСПРАВЛЕНО: v4 вместо v3
+    - name: Upload patch as artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: a810-all-patches-vs-whitebelyash
+        name: a810-mega-patch
         path: patches/
         retention-days: 90
 
-    - name: Create GitHub Release
+    - name: Create GitHub Release with patch
       if: github.event.inputs.create_release == 'true'
-      uses: softprops/action-gh-release@v2  # 👈 тоже обновим для совместимости
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: all-patches-${{ github.run_number }}
-        name: "🎯 ALL A810 Patches vs whitebelyashx #${{ github.run_number }}"
+        tag_name: a810-patch-${{ github.run_number }}
+        name: " A810 Mega Patch #${{ github.run_number }}"
         body: |
-          ## 📦 ПОЛНЫЙ НАБОР ПАТЧЕЙ ДЛЯ ADRENO 810
+          ##  ОДИН БОЛЬШОЙ ПАТЧ СО ВСЕМИ ИЗМЕНЕНИЯМИ
 
-          ### 🎯 Что внутри:
-          - **Все изменённые файлы:** ${{ env.TOTAL_FILES }}
-          - **Добавлено строк:** ${{ env.TOTAL_ADDITIONS }}
-          - **Удалено строк:** ${{ env.TOTAL_DELETIONS }}
-
-          ### 📋 Список изменённых файлов:
-          $(cat patches/all-changed-files.txt | sed 's/^/- `/; s/$/`/')
-
-          ### 🔧 Быстрое применение:
+          ### 🔧 Как использовать:
           ```bash
-          # Скачай и распакуй
-          wget https://github.com/${{ github.repository }}/releases/download/all-patches-${{ github.run_number }}/a810-all-patches-vs-whitebelyash.zip
-          unzip a810-all-patches-vs-whitebelyash.zip
-          
-          # Примени к свежему Mesa
+          # Скачай свежий Mesa
           git clone https://gitlab.freedesktop.org/mesa/mesa.git
           cd mesa
-          git apply ../patches/total-vs-whitebelyash.patch
+          
+          # Примени патч
+          git apply /path/to/a810-complete.patch
+          
+          # Собери
+          meson setup build
+          ninja -C build
           ```
 
-          ### ✅ Создано автоматически
-          - Whitebelyash commit: $(cat whitebelyash-commit.txt || echo "unknown")
-          - Твой последний коммит: $(cd your-repo && git rev-parse HEAD || echo "unknown")
+          ### Статистика:
+          $(cat patches/README.md)
+
+          ### Изменённые файлы:
+          $(cat patches/changed-files.txt | sed 's/^/- `/; s/$/`/')
         files: |
-          patches/total-vs-whitebelyash.patch
-          patches/clean/*.diff
-          patches/all-changed-files.txt
-          patches/all-changes-status.txt
-          patches/new-files.txt
-          patches/deleted-files.txt
-          patches/modified-files.txt
-          patches/renamed-files.txt
-          patches/stats/*
-          patches/README.md
+          patches/a810-complete.patch
+          patches/changed-files.txt
