@@ -46,34 +46,30 @@ echo "Applying complete A810 patch..."
 if [ -f "../../patches/a810-all-changes.patch" ]; then
     cp "../../patches/a810-all-changes.patch" ./
     
-    # Чистим патч от git-мусора
-    echo "Cleaning patch from git metadata..."
-    grep -v "^diff --git a/\.git/" a810-all-changes.patch > a810-all-changes.clean.patch
-    grep -v "^new file mode 100644 \.git/" a810-all-changes.clean.patch > a810-all-changes.clean2.patch
-    grep -v "^index .*\.\.\." a810-all-changes.clean2.patch > a810-all-changes.clean3.patch
-    grep -v "^--- a/\.git/" a810-all-changes.clean3.patch > a810-all-changes.clean4.patch
-    grep -v "^+++ b/\.git/" a810-all-changes.clean4.patch > a810-all-changes.clean.patch
-    
-    mv a810-all-changes.clean.patch a810-all-changes.patch
-    
-    echo "Trying to apply the cleaned patch..."
-    if git apply --check a810-all-changes.patch 2>/dev/null; then
-        git apply a810-all-changes.patch
-        echo "✓ Patch applied successfully!"
+    # Пробуем применить через git am (лучший способ для format-patch)
+    echo "Trying git am..."
+    if git am a810-all-changes.patch; then
+        echo "✓ Patch applied with git am!"
     else
-        echo "⚠ Regular apply failed, trying with --ignore-whitespace..."
-        if git apply --ignore-whitespace --check a810-all-changes.patch 2>/dev/null; then
-            git apply --ignore-whitespace a810-all-changes.patch
-            echo "✓ Patch applied with --ignore-whitespace"
+        echo "git am failed, aborting..."
+        git am --abort
+        
+        # Пробуем git apply с reject файлами
+        echo "Trying git apply with reject files..."
+        if git apply --reject a810-all-changes.patch; then
+            echo "✓ Patch applied with git apply"
         else
-            echo "⚠ Still failing, trying 3-way merge..."
-            if git apply -3 --check a810-all-changes.patch 2>/dev/null; then
-                git apply -3 a810-all-changes.patch
-                echo "✓ Patch applied with 3-way merge"
+            echo "git apply failed, checking reject files..."
+            
+            # Показываем что не наложилось
+            find . -name "*.rej" | head -5 || echo "No reject files found"
+            
+            # Пробуем patch command как последний шанс
+            echo "Trying patch command..."
+            if patch -p1 -i a810-all-changes.patch -N -t; then
+                echo "✓ Patch applied with patch command!"
             else
-                echo "✗ Failed to apply the patch!"
-                echo "Showing first error:"
-                git apply --check a810-all-changes.patch 2>&1 | head -20
+                echo "✗ Failed to apply patch!"
                 exit 1
             fi
         fi
@@ -92,7 +88,7 @@ else
 fi
 
 # Получаем хеш коммита
-GITHASH=$(git rev-parse --short HEAD)
+GITHASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
 # Настраиваем компилятор
 mkdir -p "$workdir/bin"
@@ -180,7 +176,7 @@ cat <<EOF >"meta.json"
 {
   "schemaVersion": 1,
   "name": "Mesa Turnip A810 v$BUILD_VERSION-$GITHASH",
-  "description": "Mesa Turnip with full A810 support (387 patches from whitebelyash/gen8 + GPT363)",
+  "description": "Mesa Turnip with full A810 support (387 patches + GPT363)",
   "author": "whitebelyash / DVD",
   "packageVersion": "1",
   "vendor": "Mesa",
