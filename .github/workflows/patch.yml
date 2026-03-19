@@ -1,128 +1,125 @@
-name:  Create Patches from Your Changes
+name: A810 Patch
 
 on:
   workflow_dispatch:
     inputs:
       create_release:
-        description: 'Create GitHub Release with patches'
+        description: 'Create GitHub Release with patch'
         required: true
         default: true
         type: boolean
 
 jobs:
-  create-patches:
+  create-patch:
     runs-on: ubuntu-latest
     permissions:
       contents: write
       actions: write
-    
+
     steps:
-    - name: Checkout your repository (main branch)
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        path: your-repo
-        ref: main  # используем main вместо mesa-git
+      # 1. Клонируем твой репозиторий (ветка gen8)
+      - name: Checkout your repo (GPT363/mesa-tu8, gen8)
+        uses: actions/checkout@v4
+        with:
+          repository: GPT363/mesa-tu8
+          ref: gen8
+          path: your-repo
+          fetch-depth: 0
 
-    - name: Clone whitebelyash/mesa-tu8 (gen8 branch)
-      run: |
-        git clone --branch gen8 https://github.com/whitebelyash/mesa-tu8.git whitebelyash-repo
-        cd whitebelyash-repo
-        WB_COMMIT=$(git rev-parse HEAD)
-        echo "WB_COMMIT=$WB_COMMIT" >> $GITHUB_ENV
-        echo "Whitebelyash latest commit: $WB_COMMIT"
+      # 2. Клонируем репозиторий Беляша (ветка gen8)
+      - name: Checkout whitebelyash repo (whitebelyash/mesa-tu8, gen8)
+        uses: actions/checkout@v4
+        with:
+          repository: whitebelyash/mesa-tu8
+          ref: gen8
+          path: whitebelyash-repo
+          fetch-depth: 0
 
-    - name: Find common ancestor with gen8
-      run: |
-        cd your-repo
-        
-        git remote add whitebelyash https://github.com/whitebelyash/mesa-tu8.git
-        git fetch whitebelyash gen8 --depth=100
-        
-        BASE=$(git merge-base HEAD whitebelyash/gen8 || echo "")
-        
-        if [ -n "$BASE" ]; then
-          echo "BASE_COMMIT=$BASE" >> $GITHUB_ENV
-          echo "Found common ancestor with gen8: $BASE"
-        else
-          echo "No common ancestor found, using whitebelyash first commit"
-          echo "BASE_COMMIT=$WB_COMMIT" >> $GITHUB_ENV
-        fi
+      # 3. Создаём патч со всеми отличиями твоей ветки от ветки Беляша
+      - name: Create mega patch (your gen8 vs whitebelyash gen8)
+        run: |
+          cd your-repo
+          
+          # Добавляем Беляша как remote и фетчим
+          git remote add whitebelyash ../whitebelyash-repo
+          git fetch whitebelyash
+          
+          # Получаем хеши коммитов для информации
+          YOUR_COMMIT=$(git rev-parse HEAD)
+          WB_COMMIT=$(git rev-parse whitebelyash/gen8)
+          
+          echo "YOUR_COMMIT=$YOUR_COMMIT" >> $GITHUB_ENV
+          echo "WB_COMMIT=$WB_COMMIT" >> $GITHUB_ENV
+          
+          # Создаём ОДИН патч со ВСЕМИ изменениями
+          echo "Creating mega patch with ALL changes..."
+          git diff whitebelyash/gen8..HEAD > ../a810-complete.patch
+          
+          # Создаём список изменённых файлов
+          git diff --name-only whitebelyash/gen8..HEAD > ../changed-files.txt
+          
+          # Статистика
+          git diff --stat whitebelyash/gen8..HEAD > ../stats.txt
 
-    - name: Get your latest commit
-      run: |
-        cd your-repo
-        YOUR_COMMIT=$(git rev-parse HEAD)
-        echo "YOUR_COMMIT=$YOUR_COMMIT" >> $GITHUB_ENV
+      # 4. Создаём README с информацией
+      - name: Create README
+        run: |
+          {
+            echo "# A810 Patches (your gen8 vs whitebelyash gen8)"
+            echo ""
+            echo "## Information"
+            echo "- Your commit: ${{ env.YOUR_COMMIT }}"
+            echo "- Whitebelyash commit: ${{ env.WB_COMMIT }}"
+            echo ""
+            echo "## Changed files"
+            echo '```'
+            cat changed-files.txt
+            echo '```'
+            echo ""
+            echo "## Statistics"
+            echo '```'
+            cat stats.txt
+            echo '```'
+          } > README.md
 
-    - name: Create mega patch
-      run: |
-        cd your-repo
-        mkdir -p ../patches
-        
-        echo "Creating mega patch from ${{ env.BASE_COMMIT }} to HEAD..."
-        git diff ${{ env.BASE_COMMIT }}..HEAD > ../patches/a810-complete.patch
-        
-        git diff --name-only ${{ env.BASE_COMMIT }}..HEAD > ../patches/changed-files.txt
-        
-        {
-          echo "# A810 Patches vs whitebelyash/mesa-tu8 (gen8)"
-          echo ""
-          echo "## Information"
-          echo "- Your branch: main"
-          echo "- Your latest commit: ${{ env.YOUR_COMMIT }}"
-          echo "- Whitebelyash branch: gen8"
-          echo "- Whitebelyash commit: ${{ env.WB_COMMIT }}"
-          echo "- Base commit: ${{ env.BASE_COMMIT }}"
-          echo ""
-          echo "## Changed files"
-          echo '```'
-          cat ../patches/changed-files.txt
-          echo '```'
-          echo ""
-          echo "## Changes statistics"
-          echo '```'
-          git diff --stat ${{ env.BASE_COMMIT }}..HEAD
-          echo '```'
-        } > ../patches/README.md
+      # 5. Загружаем артефакты
+      - name: Upload patch as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: a810-mega-patch
+          path: |
+            a810-complete.patch
+            changed-files.txt
+            stats.txt
+            README.md
+          retention-days: 90
 
-    - name: Upload patch as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: a810-mega-patch
-        path: patches/
-        retention-days: 90
+      # 6. Создаём релиз (опционально)
+      - name: Create GitHub Release
+        if: github.event.inputs.create_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: a810-patch-${{ github.run_number }}
+          name: "A810 Mega Patch #${{ github.run_number }}"
+          body: |
+            ONE BIG PATCH WITH ALL CHANGES
 
-    - name: Create GitHub Release with patch
-      if: github.event.inputs.create_release == 'true'
-      uses: softprops/action-gh-release@v2
-      with:
-        tag_name: a810-patch-${{ github.run_number }}
-        name: "A810 Mega Patch #${{ github.run_number }}"
-        body: |
-          ONE BIG PATCH WITH ALL CHANGES
+            Information:
+            - Your commit: ${{ env.YOUR_COMMIT }}
+            - Whitebelyash commit: ${{ env.WB_COMMIT }}
 
-          Information:
-          - Your branch: main
-          - Your commit: ${{ env.YOUR_COMMIT }}
-          - Whitebelyash branch: gen8
-          - Whitebelyash commit: ${{ env.WB_COMMIT }}
-          - Base commit: ${{ env.BASE_COMMIT }}
+            How to use:
+            ```
+            git clone https://gitlab.freedesktop.org/mesa/mesa.git
+            cd mesa
+            git apply /path/to/a810-complete.patch
+            meson setup build
+            ninja -C build
+            ```
 
-          How to use:
-          ```
-          git clone https://gitlab.freedesktop.org/mesa/mesa.git
-          cd mesa
-          git apply /path/to/a810-complete.patch
-          meson setup build
-          ninja -C build
-          ```
-
-          Total files changed: $(cat patches/changed-files.txt | wc -l)
-
-          Changed files:
-          $(cat patches/changed-files.txt | sed 's/^/- /')
-        files: |
-          patches/a810-complete.patch
-          patches/changed-files.txt
-          patches/README.md
+            Changed files: $(cat changed-files.txt | wc -l)
+          files: |
+            a810-complete.patch
+            changed-files.txt
+            stats.txt
+            README.md
