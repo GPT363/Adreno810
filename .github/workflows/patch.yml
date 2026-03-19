@@ -1,4 +1,4 @@
-name: Create Patches from my Changes
+name:  Create Patches from Your Changes
 
 on:
   workflow_dispatch:
@@ -17,12 +17,12 @@ jobs:
       actions: write
     
     steps:
-    - name: Checkout your repository (mesa-git branch)
+    - name: Checkout your repository (main branch)
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         path: your-repo
-        ref: mesa-git
+        ref: main  # используем main вместо mesa-git
 
     - name: Clone whitebelyash/mesa-tu8 (gen8 branch)
       run: |
@@ -33,15 +33,12 @@ jobs:
         echo "Whitebelyash latest commit: $WB_COMMIT"
 
     - name: Find common ancestor with gen8
-      id: find-base
       run: |
         cd your-repo
         
-        # Добавляем whitebelyash и фетчим gen8
         git remote add whitebelyash https://github.com/whitebelyash/mesa-tu8.git
         git fetch whitebelyash gen8 --depth=100
         
-        # Пытаемся найти общий коммит с gen8
         BASE=$(git merge-base HEAD whitebelyash/gen8 || echo "")
         
         if [ -n "$BASE" ]; then
@@ -49,7 +46,7 @@ jobs:
           echo "Found common ancestor with gen8: $BASE"
         else
           echo "No common ancestor found, using whitebelyash first commit"
-          echo "BASE_COMMIT=${{ env.WB_COMMIT }}" >> $GITHUB_ENV
+          echo "BASE_COMMIT=$WB_COMMIT" >> $GITHUB_ENV
         fi
 
     - name: Get your latest commit
@@ -72,7 +69,7 @@ jobs:
           echo "# A810 Patches vs whitebelyash/mesa-tu8 (gen8)"
           echo ""
           echo "## Information"
-          echo "- Your branch: mesa-git"
+          echo "- Your branch: main"
           echo "- Your latest commit: ${{ env.YOUR_COMMIT }}"
           echo "- Whitebelyash branch: gen8"
           echo "- Whitebelyash commit: ${{ env.WB_COMMIT }}"
@@ -106,7 +103,7 @@ jobs:
           ONE BIG PATCH WITH ALL CHANGES
 
           Information:
-          - Your branch: mesa-git
+          - Your branch: main
           - Your commit: ${{ env.YOUR_COMMIT }}
           - Whitebelyash branch: gen8
           - Whitebelyash commit: ${{ env.WB_COMMIT }}
