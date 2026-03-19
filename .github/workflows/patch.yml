@@ -18,7 +18,7 @@ jobs:
     
     steps:
     - name: Checkout your repository (full history)
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         path: your-repo
@@ -213,7 +213,7 @@ jobs:
         fi
 
     - name: Upload ALL patches as artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4  # 👈 ИСПРАВЛЕНО: v4 вместо v3
       with:
         name: a810-all-patches-vs-whitebelyash
         path: patches/
@@ -221,7 +221,7 @@ jobs:
 
     - name: Create GitHub Release
       if: github.event.inputs.create_release == 'true'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2  # 👈 тоже обновим для совместимости
       with:
         tag_name: all-patches-${{ github.run_number }}
         name: "🎯 ALL A810 Patches vs whitebelyashx #${{ github.run_number }}"
