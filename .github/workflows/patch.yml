@@ -1,4 +1,4 @@
-name: Create Patches from  my Changes
+name: Create Patches from my Changes
 
 on:
   workflow_dispatch:
@@ -29,25 +29,26 @@ jobs:
         git clone --branch gen8 https://github.com/whitebelyash/mesa-tu8.git whitebelyash-repo
         cd whitebelyash-repo
         WB_COMMIT=$(git rev-parse HEAD)
-        echo "Whitebelyash latest commit: $WB_COMMIT"
         echo "WB_COMMIT=$WB_COMMIT" >> $GITHUB_ENV
+        echo "Whitebelyash latest commit: $WB_COMMIT"
 
-    - name: Find common ancestor
+    - name: Find common ancestor with gen8
       id: find-base
       run: |
         cd your-repo
         
+        # Добавляем whitebelyash и фетчим gen8
         git remote add whitebelyash https://github.com/whitebelyash/mesa-tu8.git
-        git fetch whitebelyash gen8
+        git fetch whitebelyash gen8 --depth=100
         
-        # Пробуем найти общий коммит
+        # Пытаемся найти общий коммит с gen8
         BASE=$(git merge-base HEAD whitebelyash/gen8 || echo "")
         
         if [ -n "$BASE" ]; then
           echo "BASE_COMMIT=$BASE" >> $GITHUB_ENV
-          echo "Found common ancestor: $BASE"
+          echo "Found common ancestor with gen8: $BASE"
         else
-          echo "Could not find common ancestor, using whitebelyash first commit..."
+          echo "No common ancestor found, using whitebelyash first commit"
           echo "BASE_COMMIT=${{ env.WB_COMMIT }}" >> $GITHUB_ENV
         fi
 
@@ -56,14 +57,13 @@ jobs:
         cd your-repo
         YOUR_COMMIT=$(git rev-parse HEAD)
         echo "YOUR_COMMIT=$YOUR_COMMIT" >> $GITHUB_ENV
-        echo "Your latest commit: $YOUR_COMMIT"
 
     - name: Create mega patch
       run: |
         cd your-repo
         mkdir -p ../patches
         
-        echo "Creating mega patch with ALL changes..."
+        echo "Creating mega patch from ${{ env.BASE_COMMIT }} to HEAD..."
         git diff ${{ env.BASE_COMMIT }}..HEAD > ../patches/a810-complete.patch
         
         git diff --name-only ${{ env.BASE_COMMIT }}..HEAD > ../patches/changed-files.txt
