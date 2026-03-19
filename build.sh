@@ -12,9 +12,13 @@ ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
 mesasrc="https://gitlab.freedesktop.org/mesa/mesa"
 srcfolder="mesa"
-BUILD_VERSION=${1:-"custom"}  # Версия из аргумента или "custom"
+BUILD_VERSION=${1:-"custom"}
 
-echo "====== Begin building TU V$BUILD_VERSION! ======"
+# Какой патч Беляша использовать?
+WHITEBELYASH_PATCH="tu8_kgsl.patch"  # Можно изменить на другой
+
+echo "====== Begin building TU V$BUILD_VERSION for Adreno 810 ======"
+echo "Using whitebelyash patch: $WHITEBELYASH_PATCH"
 
 # Создаём рабочую директорию
 mkdir -p "$workdir"
@@ -28,49 +32,90 @@ if [ ! -d "$ndkver" ]; then
     rm ndk.zip
 fi
 
-# Клонируем Mesa если нет
+# Клонируем чистый Mesa
 if [ ! -d "$srcfolder" ]; then
-    echo "Cloning Mesa..."
+    echo "Cloning Mesa main..."
     git clone $mesasrc --depth=1 -b main $srcfolder
 fi
 
 cd $srcfolder
 
-# Сбрасываем изменения (на случай если уже были патчи)
+# Сбрасываем изменения
 git reset --hard HEAD
 git clean -fd
 
-# ===== ПРИМЕНЯЕМ ПАТЧИ =====
-echo "Applying patches..."
+# ===== ПРИМЕНЯЕМ ПАТЧ БЕЛЯША =====
+echo "Applying whitebelyash patch: $WHITEBELYASH_PATCH"
 
-# Патчи Беляша (из репозитория)
-if [ -f "../../patches/whitebelyash/tu8_kgsl.patch" ]; then
-    echo "Applying whitebelyash patch..."
-    cp "../../patches/whitebelyash/tu8_kgsl.patch" ./
-    if git apply --check tu8_kgsl.patch; then
-        git apply tu8_kgsl.patch
-        echo "✓ whitebelyash patch applied"
+if [ -f "../../patches/whitebelyash/$WHITEBELYASH_PATCH" ]; then
+    cp "../../patches/whitebelyash/$WHITEBELYASH_PATCH" ./
+    
+    echo "Trying to apply $WHITEBELYASH_PATCH..."
+    if git apply --check "$WHITEBELYASH_PATCH" 2>/dev/null; then
+        git apply "$WHITEBELYASH_PATCH"
+        echo "✓ whitebelyash patch applied successfully"
     else
-        echo "✗ Failed to apply whitebelyash patch!"
-        exit 1
+        echo "⚠ Patch failed, trying with -3 (3-way merge)..."
+        if git apply -3 --check "$WHITEBELYASH_PATCH" 2>/dev/null; then
+            git apply -3 "$WHITEBELYASH_PATCH"
+            echo "✓ whitebelyash patch applied with 3-way merge"
+        else
+            echo "✗ Failed to apply $WHITEBELYASH_PATCH!"
+            echo "Trying alternative patches..."
+            
+            # Пробуем другие патчи по очереди
+            for alt_patch in tu_gen8_kgsl_android.patch tu_gen8.patch tu8_kgsl_26.patch; do
+                if [ -f "../../patches/whitebelyash/$alt_patch" ]; then
+                    echo "Trying $alt_patch..."
+                    cp "../../patches/whitebelyash/$alt_patch" ./
+                    if git apply --check "$alt_patch" 2>/dev/null; then
+                        git apply "$alt_patch"
+                        echo "✓ Using $alt_patch instead"
+                        WHITEBELYASH_PATCH="$alt_patch"
+                        break
+                    fi
+                fi
+            done
+            
+            # Если ни один не подошёл
+            if [ $? -ne 0 ]; then
+                echo "✗ No compatible whitebelyash patch found!"
+                exit 1
+            fi
+        fi
     fi
 else
-    echo "⚠ whitebelyash patch not found, skipping..."
+    echo "✗ Whitebelyash patch not found at ../../patches/whitebelyash/$WHITEBELYASH_PATCH"
+    echo "Available patches should be in patches/whitebelyash/"
+    exit 1
 fi
 
-# Ваши патчи (из репозитория)
+# ===== ПРИМЕНЯЕМ ВАШИ ПАТЧИ =====
+echo "Applying GPT363 optimizations for Adreno 810..."
+
 if [ -f "../../patches/gpt363/a810-all-changes.patch" ]; then
-    echo "Applying GPT363 patch..."
+    echo "Applying a810-all-changes.patch..."
     cp "../../patches/gpt363/a810-all-changes.patch" ./
+    
     if git apply --check a810-all-changes.patch; then
         git apply a810-all-changes.patch
-        echo "✓ GPT363 patch applied"
+        echo "✓ GPT363 patch applied successfully"
     else
         echo "✗ Failed to apply GPT363 patch!"
+        echo "Your patch may be incompatible with whitebelyash's base"
         exit 1
     fi
 else
-    echo "⚠ GPT363 patch not found, skipping..."
+    echo "✗ GPT363 patch not found at ../../patches/gpt363/a810-all-changes.patch"
+    exit 1
+fi
+
+# Проверяем наличие A810 в коде
+echo "Verifying A810 support..."
+if grep -q "A810\|gpu_id == 810" $(find src -name "*.c" -o -name "*.cc" -o -name "*.h" 2>/dev/null | head -10); then
+    echo "✓ A810 optimizations found"
+else
+    echo "⚠ WARNING: A810 optimizations may not be present!"
 fi
 
 # Получаем хеш коммита
@@ -161,9 +206,9 @@ cd /tmp/turnip/lib
 cat <<EOF >"meta.json"
 {
   "schemaVersion": 1,
-  "name": "Mesa Turnip v$BUILD_VERSION-$GITHASH",
-  "description": "Mesa Turnip for Adreno 810 with custom patches",
-  "author": " Whitebelyash / DVD",
+  "name": "Mesa Turnip A810 v$BUILD_VERSION-$GITHASH",
+  "description": "Mesa Turnip for Adreno 810 (whitebelyash/$WHITEBELYASH_PATCH + GPT363 optimizations)",
+  "author": "whitebelyash / DVD",
   "packageVersion": "1",
   "vendor": "Mesa",
   "driverVersion": "Vulkan 1.4.335",
@@ -172,12 +217,13 @@ cat <<EOF >"meta.json"
 }
 EOF
 
-zip "/tmp/mesa-turnip-V$BUILD_VERSION.zip" libvulkan_freedreno.so meta.json
+zip "/tmp/mesa-turnip-A810-v$BUILD_VERSION.zip" libvulkan_freedreno.so meta.json
 
 cd "$workdir"
 
-if [ -f "/tmp/mesa-turnip-V$BUILD_VERSION.zip" ]; then
-    echo -e "$green Build successful! Archive: /tmp/mesa-turnip-V$BUILD_VERSION.zip $nocolor"
+if [ -f "/tmp/mesa-turnip-A810-v$BUILD_VERSION.zip" ]; then
+    echo -e "$green Build successful! Archive: /tmp/mesa-turnip-A810-v$BUILD_VERSION.zip $nocolor"
+    ls -lh /tmp/mesa-turnip-A810-v$BUILD_VERSION.zip
 else
     echo -e "$red Failed to create archive! $nocolor"
     exit 1
