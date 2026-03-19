@@ -1,47 +1,60 @@
-name: Build Mesa-git
+name: Build Mesa Turnip Adreno 810
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to build'
+        description: 'Version to build (e.g., 1.0.0)'
         required: true
         type: string
+        default: '1.0.0'
 
 jobs:
-  start_building_turnip:
+  build:
     runs-on: ubuntu-24.04
     env:
       BUILD_VERSION: ${{ inputs.version }}
+    
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        path: Adreno810
 
     - name: Prepare environment
       run: |
-        sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
         sudo apt update
-        sudo apt install build-essential flex bison glslang-tools
-        sudo apt install meson-1.5 
+        sudo apt install -y build-essential flex bison glslang-tools \
+          meson ninja-build patchelf unzip curl python3-pip git \
+          zip ccache clang lld llvm
+        pip install mako
 
-    - name: Execute build script
-      run: bash ./turnip_builder_upstream.sh
+    - name: Make build script executable
+      run: chmod +x Adreno810/build.sh
 
-    - name: Release "turnip"
+    - name: Run build script
+      run: |
+        cd Adreno810
+        ./build.sh $BUILD_VERSION
+
+    - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
-        body: |
-          Mesa Turnip V${{ inputs.version }}  
-          Built from: https://gitlab.freedesktop.org/mesa/mesa
-          
-          >[!WARNING]
-          > GPUs other than A830/A840 may work unstable!
-
-          This is a build of current upstream Mesa with my GPU enablement hacks applied
-          
-
-        tag_name: mesa_v${{ inputs.version }}
         name: Mesa Turnip v${{ inputs.version }}
+        tag_name: v${{ inputs.version }}
+        body: |
+          # Mesa Turnip for Adreno 810 v${{ inputs.version }}
+          
+          **Особенности сборки:**
+          - Патчи от whitebelyash (enablement hacks)
+          - Дополнительные оптимизации для Adreno 810
+          - Основано на Mesa main
+          
+          **Проверено на:**
+          - Adreno 810 (Snapdragon 6 Gen 4, 7s gen 3, 7s gen 4)
+          
+          > ⚠️ **ВНИМАНИЕ**: Драйвер может работать нестабильно на других GPU!
         files: |
-           /tmp/mesa-turnip-main-V${{ inputs.version }}.zip
-           /tmp/mesa-turnip-main-V${{ inputs.version }}.zip
-
+          /tmp/mesa-turnip-V${{ inputs.version }}.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
