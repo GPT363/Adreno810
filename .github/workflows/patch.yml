@@ -1,4 +1,4 @@
-name: A810 Patch
+name:  Create A810 Patch
 
 on:
   workflow_dispatch:
@@ -17,7 +17,6 @@ jobs:
       actions: write
 
     steps:
-      # 1. Клонируем твой репозиторий (ветка gen8)
       - name: Checkout your repo (GPT363/mesa-tu8, gen8)
         uses: actions/checkout@v4
         with:
@@ -26,7 +25,6 @@ jobs:
           path: your-repo
           fetch-depth: 0
 
-      # 2. Клонируем репозиторий Беляша (ветка gen8)
       - name: Checkout whitebelyash repo (whitebelyash/mesa-tu8, gen8)
         uses: actions/checkout@v4
         with:
@@ -35,91 +33,76 @@ jobs:
           path: whitebelyash-repo
           fetch-depth: 0
 
-      # 3. Создаём патч со всеми отличиями твоей ветки от ветки Беляша
-      - name: Create mega patch (your gen8 vs whitebelyash gen8)
+      - name: Create patches
         run: |
           cd your-repo
           
-          # Добавляем Беляша как remote и фетчим
+          # Добавляем Беляша
           git remote add whitebelyash ../whitebelyash-repo
           git fetch whitebelyash
           
-          # Получаем хеши коммитов для информации
-          YOUR_COMMIT=$(git rev-parse HEAD)
-          WB_COMMIT=$(git rev-parse whitebelyash/gen8)
+          # Находим точку расхождения
+          BASE=$(git merge-base HEAD whitebelyash/gen8)
+          echo "Base commit: $BASE"
           
-          echo "YOUR_COMMIT=$YOUR_COMMIT" >> $GITHUB_ENV
-          echo "WB_COMMIT=$WB_COMMIT" >> $GITHUB_ENV
+          # СОЗДАЁМ ПАТЧИ ДЛЯ КАЖДОГО КОММИТА
+          mkdir -p ../patches
+          git format-patch -o ../patches $BASE..HEAD
           
-          # Создаём ОДИН патч со ВСЕМИ изменениями
-          echo "Creating mega patch with ALL changes..."
-          git diff whitebelyash/gen8..HEAD > ../a810-complete.patch
-          
-          # Создаём список изменённых файлов
-          git diff --name-only whitebelyash/gen8..HEAD > ../changed-files.txt
+          # Создаём также общий diff
+          git diff $BASE..HEAD > ../total-diff.patch
           
           # Статистика
-          git diff --stat whitebelyash/gen8..HEAD > ../stats.txt
+          echo "Total commits: $(git rev-list --count $BASE..HEAD)" > ../stats.txt
+          echo "Total files changed: $(git diff --name-only $BASE..HEAD | wc -l)" >> ../stats.txt
+          git diff --shortstat $BASE..HEAD >> ../stats.txt
 
-      # 4. Создаём README с информацией
-      - name: Create README
+      - name: Create info file
         run: |
+          cd your-repo
+          
           {
-            echo "# A810 Patches (your gen8 vs whitebelyash gen8)"
+            echo "# A810 Patches Information"
             echo ""
-            echo "## Information"
-            echo "- Your commit: ${{ env.YOUR_COMMIT }}"
-            echo "- Whitebelyash commit: ${{ env.WB_COMMIT }}"
+            echo "## Commits since whitebelyash/gen8"
+            echo '```'
+            git log --oneline whitebelyash/gen8..HEAD
+            echo '```'
             echo ""
             echo "## Changed files"
             echo '```'
-            cat changed-files.txt
+            git diff --name-only whitebelyash/gen8..HEAD
             echo '```'
-            echo ""
-            echo "## Statistics"
-            echo '```'
-            cat stats.txt
-            echo '```'
-          } > README.md
+          } > ../README.md
 
-      # 5. Загружаем артефакты
-      - name: Upload patch as artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: a810-mega-patch
+          name: a810-full-patches
           path: |
-            a810-complete.patch
-            changed-files.txt
+            patches/
+            total-diff.patch
             stats.txt
             README.md
           retention-days: 90
 
-      # 6. Создаём релиз (опционально)
       - name: Create GitHub Release
         if: github.event.inputs.create_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: a810-patch-${{ github.run_number }}
-          name: "A810 Mega Patch #${{ github.run_number }}"
+          tag_name: a810-patches-${{ github.run_number }}
+          name: "A810 Full Patches #${{ github.run_number }}"
           body: |
-            ONE BIG PATCH WITH ALL CHANGES
+            Full patch set with all commits
 
-            Information:
-            - Your commit: ${{ env.YOUR_COMMIT }}
-            - Whitebelyash commit: ${{ env.WB_COMMIT }}
+            Statistics:
+            $(cat stats.txt)
 
-            How to use:
-            ```
-            git clone https://gitlab.freedesktop.org/mesa/mesa.git
-            cd mesa
-            git apply /path/to/a810-complete.patch
-            meson setup build
-            ninja -C build
-            ```
-
-            Changed files: $(cat changed-files.txt | wc -l)
+            Structure:
+            - `patches/` - individual patches for each commit
+            - `total-diff.patch` - one big diff with all changes
           files: |
-            a810-complete.patch
-            changed-files.txt
+            patches/*.patch
+            total-diff.patch
             stats.txt
             README.md
