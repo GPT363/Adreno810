@@ -40,38 +40,31 @@ cd $srcfolder
 git reset --hard HEAD
 git clean -fd
 
+# Настраиваем git (чтобы git am работал)
+git config user.email "dvd0disk@gmail.com"
+git config user.name "DVD"
+
 # ===== ПРИМЕНЯЕМ ВЕСЬ ПАТЧ =====
 echo "Applying complete A810 patch..."
 
 if [ -f "../../patches/a810-all-changes.patch" ]; then
     cp "../../patches/a810-all-changes.patch" ./
     
-    # Пробуем применить через git am (лучший способ для format-patch)
+    # Пробуем применить через git am
     echo "Trying git am..."
     if git am a810-all-changes.patch; then
         echo "✓ Patch applied with git am!"
     else
         echo "git am failed, aborting..."
-        git am --abort
+        git am --abort 2>/dev/null || true
         
-        # Пробуем git apply с reject файлами
-        echo "Trying git apply with reject files..."
-        if git apply --reject a810-all-changes.patch; then
+        # Пробуем git apply
+        echo "Trying git apply..."
+        if git apply a810-all-changes.patch; then
             echo "✓ Patch applied with git apply"
         else
-            echo "git apply failed, checking reject files..."
-            
-            # Показываем что не наложилось
-            find . -name "*.rej" | head -5 || echo "No reject files found"
-            
-            # Пробуем patch command как последний шанс
-            echo "Trying patch command..."
-            if patch -p1 -i a810-all-changes.patch -N -t; then
-                echo "✓ Patch applied with patch command!"
-            else
-                echo "✗ Failed to apply patch!"
-                exit 1
-            fi
+            echo "✗ Failed to apply patch!"
+            exit 1
         fi
     fi
 else
@@ -81,7 +74,7 @@ fi
 
 # Проверяем, что патч наложился
 echo "Verifying patch application..."
-if grep -q "A810\|810" $(find src -name "*.c" -o -name "*.h" -o -name "*.py" 2>/dev/null | head -5); then
+if grep -q "A810\|810" $(find src -name "*.c" -o -name "*.h" -o -name "*.py" 2>/dev/null | head -5 2>/dev/null); then
     echo "✓ A810 code found in source"
 else
     echo "⚠ WARNING: A810 code not found, patch may have failed!"
@@ -176,7 +169,7 @@ cat <<EOF >"meta.json"
 {
   "schemaVersion": 1,
   "name": "Mesa Turnip A810 v$BUILD_VERSION-$GITHASH",
-  "description": "Mesa Turnip with full A810 support (387 patches + GPT363)",
+  "description": "Mesa Turnip with full A810 support",
   "author": "whitebelyash / DVD",
   "packageVersion": "1",
   "vendor": "Mesa",
