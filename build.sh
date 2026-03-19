@@ -40,13 +40,23 @@ cd $srcfolder
 git reset --hard HEAD
 git clean -fd
 
-# ===== ПРИМЕНЯЕМ ВЕСЬ ПАТЧ (твои правки + правки Беляша) =====
-echo "Applying complete A810 patch (387 commits)..."
+# ===== ПРИМЕНЯЕМ ВЕСЬ ПАТЧ =====
+echo "Applying complete A810 patch..."
 
 if [ -f "../../patches/a810-all-changes.patch" ]; then
     cp "../../patches/a810-all-changes.patch" ./
     
-    echo "Trying to apply the mega patch..."
+    # Чистим патч от git-мусора
+    echo "Cleaning patch from git metadata..."
+    grep -v "^diff --git a/\.git/" a810-all-changes.patch > a810-all-changes.clean.patch
+    grep -v "^new file mode 100644 \.git/" a810-all-changes.clean.patch > a810-all-changes.clean2.patch
+    grep -v "^index .*\.\.\." a810-all-changes.clean2.patch > a810-all-changes.clean3.patch
+    grep -v "^--- a/\.git/" a810-all-changes.clean3.patch > a810-all-changes.clean4.patch
+    grep -v "^+++ b/\.git/" a810-all-changes.clean4.patch > a810-all-changes.clean.patch
+    
+    mv a810-all-changes.clean.patch a810-all-changes.patch
+    
+    echo "Trying to apply the cleaned patch..."
     if git apply --check a810-all-changes.patch 2>/dev/null; then
         git apply a810-all-changes.patch
         echo "✓ Patch applied successfully!"
@@ -171,7 +181,7 @@ cat <<EOF >"meta.json"
   "schemaVersion": 1,
   "name": "Mesa Turnip A810 v$BUILD_VERSION-$GITHASH",
   "description": "Mesa Turnip with full A810 support (387 patches from whitebelyash/gen8 + GPT363)",
-  "author": "GPT363",
+  "author": "whitebelyash / DVD",
   "packageVersion": "1",
   "vendor": "Mesa",
   "driverVersion": "Vulkan 1.4.335",
