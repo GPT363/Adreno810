@@ -1,4 +1,4 @@
-name:  Create Patches from my Changes
+name: Create Patches from Your Changes
 
 on:
   workflow_dispatch:
@@ -17,22 +17,16 @@ jobs:
       actions: write
     
     steps:
-    - name: Checkout your repository
+    - name: Checkout your repository (mesa-git branch)
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
         path: your-repo
+        ref: mesa-git  # твоя ветка
 
-    - name: Clone whitebelyash/mesa-tu8
+    - name: Clone whitebelyash/mesa-tu8 (gen8 branch)
       run: |
-        git clone https://github.com/whitebelyash/mesa-tu8.git whitebelyash-repo || \
-        git clone git://github.com/whitebelyash/mesa-tu8.git whitebelyash-repo || \
-        {
-          echo "Failed to clone whitebelyash/mesa-tu8"
-          echo "Try: https://github.com/whitebelyash/mesa-tu8"
-          exit 1
-        }
-        
+        git clone --branch gen8 https://github.com/whitebelyash/mesa-tu8.git whitebelyash-repo
         cd whitebelyash-repo
         echo "Whitebelyash latest commit: $(git rev-parse HEAD)" > ../whitebelyash-info.txt
         git rev-parse HEAD > ../whitebelyash-commit.txt
@@ -42,42 +36,49 @@ jobs:
         cd your-repo
         
         git remote add whitebelyash https://github.com/whitebelyash/mesa-tu8.git
-        git fetch whitebelyash --depth=100 || git fetch whitebelyash
+        git fetch whitebelyash gen8
         
-        BASE=$(git merge-base HEAD whitebelyash/main || echo "")
+        # Находим точку расхождения с веткой gen8
+        BASE=$(git merge-base HEAD whitebelyash/gen8 || echo "")
         
         if [ -n "$BASE" ]; then
           echo "BASE_COMMIT=$BASE" >> $GITHUB_ENV
           echo "Found common ancestor: $BASE"
         else
-          echo "Could not find common ancestor, checking first commits..."
-          
+          echo "Could not find common ancestor, using first whitebelyash commit..."
           cd ../whitebelyash-repo
           WB_FIRST=$(git rev-list --max-parents=0 HEAD)
           cd ../your-repo
-          
           echo "BASE_COMMIT=$WB_FIRST" >> $GITHUB_ENV
           echo "Using whitebelyash first commit: $WB_FIRST"
         fi
-        
-        echo "Your latest commit: $(git rev-parse HEAD)" >> ../whitebelyash-info.txt
 
-    - name: Create mega patch (ALL changes in one file)
+    - name: Get your latest commit
+      run: |
+        cd your-repo
+        YOUR_COMMIT=$(git rev-parse HEAD)
+        echo "YOUR_COMMIT=$YOUR_COMMIT" >> $GITHUB_ENV
+        echo "Your latest commit: $YOUR_COMMIT"
+
+    - name: Create mega patch
       run: |
         cd your-repo
         mkdir -p ../patches
         
         echo "Creating mega patch with ALL changes..."
-        git diff $BASE_COMMIT..HEAD > ../patches/a810-complete.patch
+        git diff ${{ env.BASE_COMMIT }}..HEAD > ../patches/a810-complete.patch
         
-        git diff --name-only $BASE_COMMIT..HEAD > ../patches/changed-files.txt
+        git diff --name-only ${{ env.BASE_COMMIT }}..HEAD > ../patches/changed-files.txt
         
         {
-          echo "# A810 Patches vs whitebelyash/mesa-tu8"
+          echo "# A810 Patches vs whitebelyash/mesa-tu8 (gen8)"
           echo ""
           echo "## Information"
-          echo "- Your latest commit: $(git rev-parse HEAD)"
+          echo "- Your branch: mesa-git"
+          echo "- Your latest commit: ${{ env.YOUR_COMMIT }}"
+          echo "- Whitebelyash branch: gen8"
           echo "- Whitebelyash commit: $(cat ../whitebelyash-commit.txt)"
+          echo "- Base commit: ${{ env.BASE_COMMIT }}"
           echo ""
           echo "## Changed files"
           echo '```'
@@ -86,7 +87,7 @@ jobs:
           echo ""
           echo "## Changes statistics"
           echo '```'
-          git diff --stat $BASE_COMMIT..HEAD
+          git diff --stat ${{ env.BASE_COMMIT }}..HEAD
           echo '```'
         } > ../patches/README.md
 
@@ -106,6 +107,13 @@ jobs:
         body: |
           ONE BIG PATCH WITH ALL CHANGES
 
+          Information:
+          - Your branch: mesa-git
+          - Your commit: ${{ env.YOUR_COMMIT }}
+          - Whitebelyash branch: gen8
+          - Whitebelyash commit: $(cat whitebelyash-commit.txt || echo "unknown")
+          - Base commit: ${{ env.BASE_COMMIT }}
+
           How to use:
           ```
           git clone https://gitlab.freedesktop.org/mesa/mesa.git
@@ -115,10 +123,7 @@ jobs:
           ninja -C build
           ```
 
-          Statistics:
-          - Your commit: $(cd your-repo && git rev-parse HEAD)
-          - Whitebelyash commit: $(cat whitebelyash-commit.txt || echo "unknown")
-          - Total files: $(cat patches/changed-files.txt | wc -l)
+          Total files changed: $(cat patches/changed-files.txt | wc -l)
 
           Changed files:
           $(cat patches/changed-files.txt | sed 's/^/- /')
