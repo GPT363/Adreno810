@@ -1,0 +1,31 @@
+From 9d0038dcc5511e6197aa4202f1ad79013f450d46 Mon Sep 17 00:00:00 2001
+From: whitebelyash <whbexiumwork@gmail.com>
+Date: Tue, 20 Jan 2026 09:40:23 +0400
+Subject: [PATCH] HACK: tu: disable force-enabled flushall
+
+Causes huge performance drop in real usage. Was enabled to pass VK CTS tests, but we don't care about these much, so can remove it again
+
+freedreno: rebase fixup
+Signed-off-by: whitebelyash <whbexiumwork@gmail.com>
+---
+ src/freedreno/vulkan/tu_device.cc | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/freedreno/vulkan/tu_device.cc b/src/freedreno/vulkan/tu_device.cc
+index 92f2d71a32f..e5b6cbaf181 100644
+--- a/src/freedreno/vulkan/tu_device.cc
++++ b/src/freedreno/vulkan/tu_device.cc
+@@ -2749,7 +2749,9 @@ tu_CreateDevice(VkPhysicalDevice physicalDevice,
+       break;
+    case 8:
+       /* gen8 TODO: */
+-      tu_env.debug |= TU_DEBUG_FLUSHALL;  /* dEQP-VK.draw.\*from_compute\* */
++      /* Commented as we do not care about CTS fails
++      tu_env.debug |= TU_DEBUG_FLUSHALL;  /\* dEQP-VK.draw.\*from_compute\* *\/
++      */
+       vk_device_dispatch_table_from_entrypoints(
+          &dispatch_table, &tu_device_entrypoints_a8xx, false);
+    }
+-- 
+2.53.0
+
