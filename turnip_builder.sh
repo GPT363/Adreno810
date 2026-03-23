@@ -11,7 +11,7 @@ workdir="$(pwd)/turnip_workdir"
 ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
-mesasrc="https://github.com/GPT363/mesa-tu8/tree/Secret"
+mesasrc="https://github.com/GPT363/mesa-tu8/tree/gen8"
 srcfolder="mesa"
 
 clear
@@ -153,7 +153,7 @@ EOF
   "libraryName": "libvulkan_freedreno.so"
 }
 EOF
-	zip /tmp/a810_FSR_only-$1-V$BUILD_VERSION.zip libvulkan_freedreno.so meta.json
+	zip /tmp/a810_only-$1-V$BUILD_VERSION.zip libvulkan_freedreno.so meta.json
 	cd -
 	
 	if [ -f /tmp/a810_only-$1-V$BUILD_VERSION.zip ]; then
