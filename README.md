@@ -13,7 +13,7 @@
 - https://github.com/whitebelyash/mesa-tu8  
 - https://github.com/whitebelyash/freedreno_turnip-Cl  
 
-Ветка **whitebelyash/gen8** уже содержит базовую поддержку Adreno 810.  
+Ветка **whitebelyash/gen8** уже содержит базовую поддержку Adreno 8XX.  
 Моя задача — улучшить стабильность, исправить проблемы рендера и адаптировать драйвер под реальные устройства.
 
 Это **неофициальный форк**, созданный энтузиастом.  
