@@ -21,7 +21,7 @@ run_all(){
 	check_deps
 	prepare_workdir
 	build_lib_for_android mesa
-	}
+}
 
 check_deps(){
 	echo "Проверка системных зависимостей..."
@@ -153,15 +153,15 @@ EOF
   "libraryName": "libvulkan_freedreno.so"
 }
 EOF
-	zip /tmp/A8XX_T-$1-V$BUILD_VERSION.zip libvulkan_freedreno.so meta.json
+	# ИСПРАВЛЕНО: имя архива совпадает с ожидаемым в YAML
+	zip /tmp/A8XX_T-V$BUILD_VERSION.zip libvulkan_freedreno.so meta.json
 	cd -
 	
-	if [ -f /tmp/A8XX_T-$1-V$BUILD_VERSION.zip ]; then
-		echo -e "$green Архив успешно создан: /tmp/A8XX_T-$1-V$BUILD_VERSION.zip $nocolor"
+	if [ -f /tmp/A8XX_T-V$BUILD_VERSION.zip ]; then
+		echo -e "$green Архив успешно создан: /tmp/A8XX_T-V$BUILD_VERSION.zip $nocolor"
 	else
 		echo -e "$red Не удалось упаковать архив! $nocolor"
 	fi
 }
 
 run_all
-
