@@ -27,6 +27,9 @@ jobs:
     - name: Execute build script
       run: bash ./turnip_builder.sh
 
+    - name: List files in /tmp
+      run: ls -la /tmp/*.zip || echo "No zip files found"
+
     - name: Release "turnip"
       uses: softprops/action-gh-release@v1
       with:
@@ -41,17 +44,20 @@ jobs:
 
           🖥 Supported GPU
           
-          • Adreno 840/830  maybe they work
+          • Adreno 840/830 — maybe they work
           • Adreno 810 — sysmem/gmem, tested, includes custom patches.
-          • Adreno 829/825  They may work, but not guaranteed.
+          • Adreno 829/825 — They may work, but not guaranteed.
 
           📝 Changes
-          
+          • VSC buffer optimizations for Adreno 810
+          • GMEM optimizations
+          • Stability improvements
 
           ⚠️ Notes
           • If you see black artifacts, disable DXVK_HUD=0
           • Eden and some emulators may require higher render scale
           • If unstable: TU_DEBUG=nolrz
+          • For sysmem mode: export TU_DEBUG=sysmem
 
         files: |
-          /tmp/A8XX_T-${{ inputs.version }}.zip
+          /tmp/A8XX_T-V${{ inputs.version }}.zip
