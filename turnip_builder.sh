@@ -12,7 +12,7 @@ ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
 mesasrc="https://github.com/GPT363/mesa-tu8.git"
-srcfolder="A829"
+srcfolder="mesa"
 
 clear
 
@@ -20,8 +20,8 @@ run_all(){
 	echo "====== Начало сборки TU V$BUILD_VERSION! ======"
 	check_deps
 	prepare_workdir
-	build_lib_for_android A829
-}
+	build_lib_for_android mesa
+	}
 
 check_deps(){
 	echo "Проверка системных зависимостей..."
