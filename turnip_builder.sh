@@ -12,7 +12,7 @@ ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
 mesasrc="https://github.com/GPT363/mesa-tu8.git"
-srcfolder="TESST"
+srcfolder="A810-829"
 
 clear
 
