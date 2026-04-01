@@ -14,7 +14,7 @@ This repository is based on:
 - https://github.com/whitebelyash/freedreno_turnip-Cl  
 
 The **whitebelyash/gen8** branch already contains basic Adreno 8XX support.  
-My task is to improve stability, fix rendering issues, and adapt the driver for real devices.
+We task is to improve stability, fix rendering issues, and adapt the driver for real devices.
 
 This is an **unofficial fork** created by an enthusiast.  
 The code may contain experimental changes.
@@ -46,7 +46,7 @@ This is just an attempt (possibly unsuccessful 🙂)
 
 ---
 
-## ✔ Testing is done on real hardware (Realme P3 5G)
+## ✔ Testing is carried out on real devices
 
 **Ludashi** Winlator was used, as the official Winlator may fail to run games.
 
@@ -96,9 +96,9 @@ Do not file bug reports in official Mesa repositories — this is an unofficial 
 
 Huge thanks to: https://t.me/hardwareunion
 
-1) DerixSpace
-2) Lebron
-3) Михаил
+1) DerixSpace Lead developer 
+2) Lebron Project Manager 
+3) Михаил Assistant
 
 - whitebelyash — for the TU8 base and gen8 support  
 - Freedreno/Mesa team — for the open-source driver  
