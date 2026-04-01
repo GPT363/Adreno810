@@ -1,101 +1,106 @@
 # Mesa Turnip for Adreno 8XX (main branch)
 
-Модифицированная сборка Mesa Turnip с улучшенной поддержкой **Adreno 8XX**
+A modified build of Mesa Turnip with improved support for **Adreno 8XX**
 
-Цель проекта — улучшить стабильность и совместимость Turnip на Adreno 8XX,  
-где стандартный freedreno пока не обеспечивает полноценную работу.
+The goal of this project is to improve stability and compatibility of Turnip on Adreno 8XX,  
+where standard freedreno does not yet provide full functionality.
 
 ---
 
-## 🔥 О проекте
+## 🔥 About the Project
 
-Этот репозиторий основан на:
+This repository is based on:
 - https://github.com/whitebelyash/mesa-tu8  
 - https://github.com/whitebelyash/freedreno_turnip-Cl  
 
-Ветка **whitebelyash/gen8** уже содержит базовую поддержку Adreno 8XX.  
-Моя задача — улучшить стабильность, исправить проблемы рендера и адаптировать драйвер под реальные устройства.
+The **whitebelyash/gen8** branch already contains basic Adreno 8XX support.  
+My task is to improve stability, fix rendering issues, and adapt the driver for real devices.
 
-Это **неофициальный форк**, созданный энтузиастом.  
-Код может содержать экспериментальные изменения.
-
----
-
-## ⚠️ Статус
-
-**Активная разработка.**
-
-- Возможны баги  
-- Возможны падения FPS  
-- Возможны артефакты  
-- Возможны проблемы с конкретными играми  
-- Ничего не гарантируется  
-
-Это просто попытка (возможно неудачная 🙂) 
+This is an **unofficial fork** created by an enthusiast.  
+The code may contain experimental changes.
 
 ---
 
-## ✔ Поддерживаемые GPU
+## ⚠️ Status
 
-| GPU | Статус |
+**Active development.**
+
+- Bugs may occur  
+- FPS drops may occur  
+- Artifacts may occur  
+- Issues with specific games may occur  
+- Nothing is guaranteed  
+
+This is just an attempt (possibly unsuccessful 🙂) 
+
+---
+
+## ✔ Supported GPUs
+
+| GPU | Status |
 |-----|--------|
-| **Adreno 810** | Полностью поддерживается |
-| Adreno 830 | Может работать |
-| Adreno 840 | Может работать  |
-| Adreno 829 / 825 | может работать|
+| Adreno 810 | supported |
+| Adreno 830 | supported |
+| Adreno 840 | supported |
+| Adreno 829 / 825 | supported |
 
 ---
 
-## ✔ Тестирование проходит на реальном устройстве (Realme p3 5g)
+## ✔ Testing is done on real hardware (Realme P3 5G)
 
-Использовался Winlator **Ludashi**, так как официальный Winlator может не запускать игры.
+**Ludashi** Winlator was used, as the official Winlator may fail to run games.
 
 ---
 
-## ❗ Важно
+## ❗ Important
 
-Если у вас:
+If you experience:
 - 0 FPS  
-- игра не запускается  
-- Winlator показывает 0 Vulkan Extensions  
-- чёрный экран  
-- вылет при запуске  
+- game does not launch  
+- Winlator shows 0 Vulkan Extensions  
+- black screen  
+- crash on startup  
 
-Это **не обязательно проблема драйвера**.
+This is **not necessarily a driver issue**.
 
-Чаще всего виноваты:
-- официальный Winlator  
-- неправильный DXVK  
-- кривой контейнер  
-- неправильные настройки Wine  
+Most often the culprit is:
+- official Winlator  
+- incorrect DXVK  
+- broken container  
+- incorrect Wine settings  
 
 ---
 
-## 📝 Если что‑то не работает
+## 📝 If something isn't working
 
-Пожалуйста, приложите лог:
+Please attach a log:
 
-1. В Winlator включите **Enable Wine Debug**  
-2. Запустите игру  
-3. После вылета откройте:  
+1. In Winlator, enable **Enable Wine Debug**  
+2. Launch the game  
+3. After the crash, open:  
    `Sdcard/winlator/logs`  
-4. Прикрепите последний `.log` файл
+4. Attach the latest `.log` file
 
-Без лога невозможно понять причину.
-
----
-
-## 📌 Примечание
-
-Этот проект создан энтузиастом и не связан с Mesa, Qualcomm или Winlator.  
-Не отправляйте баг‑репорты в официальные репозитории Mesa — это неофициальная сборка.
+Without a log, it's impossible to determine the cause.
 
 ---
 
-## ❤️ Благодарности
+## 📌 Note
 
-- whitebelyash — за основу TU8 и поддержку gen8  
-- Freedreno/Mesa команде — за открытый драйвер  
-- Сообществу Adreno 8XX — за тестирование и обратную связь  
+This project is created by an enthusiast and is not affiliated with Mesa, Qualcomm, or Winlator.  
+Do not file bug reports in official Mesa repositories — this is an unofficial build.
 
 ---
+
+## ❤️ Acknowledgments
+
+Huge thanks to: https://t.me/hardwareunion
+
+1) DerixSpace
+2) Lebron
+3) Михаил
+
+- whitebelyash — for the TU8 base and gen8 support  
+- Freedreno/Mesa team — for the open-source driver  
+- Adreno 8XX community — for testing and feedback  
+
