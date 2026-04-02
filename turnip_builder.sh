@@ -12,7 +12,7 @@ ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
 mesasrc="https://github.com/DiskDVD/mesa-tu8.git"
-srcfolder="A8XX"
+srcfolder="A8X"
 
 clear
 
