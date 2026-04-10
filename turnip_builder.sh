@@ -12,7 +12,7 @@ ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
 mesasrc="https://github.com/DiskDVD/mesa-tu8.git"
-srcfolder="TEST"
+srcfolder="Upscaling"
 
 clear
 
@@ -20,7 +20,7 @@ run_all(){
 	echo "====== Начало сборки TU V$BUILD_VERSION! ======"
 	check_deps
 	prepare_workdir
-	build_lib_for_android TEST
+	build_lib_for_android Upscaling
 }
 
 check_deps(){
