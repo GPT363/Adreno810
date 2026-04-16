@@ -107,7 +107,7 @@ Huge thanks to: https://t.me/hardwareunion
 3) Михаил Assistant
 4) Ivan Romashin developer/tester
 
-#THANKS TESTER!
+#THANKS TESTERS!
 1) Ikov5I (A829)
 2) Whitedevil2427 (A829)
 3) TXT (A830)
