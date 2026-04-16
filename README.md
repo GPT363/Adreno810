@@ -92,13 +92,30 @@ Do not file bug reports in official Mesa repositories — this is an unofficial 
 
 ---
 
+source code location:
+https://github.com/DiskDVD/mesa-tu8
+
+---
+
+
 ## ❤️ Acknowledgments
 
 Huge thanks to: https://t.me/hardwareunion
 
-1) DerixSpace Lead developer 
+1) DeriSpace developer/tester
 2) Lebron Project Manager 
 3) Михаил Assistant
+4) Ivan Romashin developer/tester
+
+#THANKS TESTER!
+1) Ikov5I (A829)
+2) Whitedevil2427 (A829)
+3) TXT (A830)
+4) DeriSpace (A829)
+5) Frane  (A810)
+6) Ivan Romashin (A825)
+7) My (A810)
+
 
 - whitebelyash — for the TU8 base and gen8 support  
 - Freedreno/Mesa team — for the open-source driver  
