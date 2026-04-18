@@ -144,8 +144,8 @@ EOF
 {
   "schemaVersion": 1,
   "name": "A8XX T-$BUILD_VERSION",
-  "description": "Сборка для Adreno 810. Ветка: $1",
-  "author": " DerixSpace / DVD_Disk (minor development)",
+  "description": "Сборка для Adreno 8XX. Ветка: $1",
+  "author": " Whitebeliash / DerixSpace / DVD_Disk",
   "packageVersion": "1",
   "vendor": "Mesa",
   "driverVersion": "Vulkan 1.4.335",
