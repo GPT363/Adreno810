@@ -1,76 +1,95 @@
 #!/bin/bash -e
 
+#Define variables
 green='\033[0;32m'
 red='\033[0;31m'
 nocolor='\033[0m'
-
 deps="git meson ninja patchelf unzip curl pip flex bison zip glslang glslangValidator"
-
-workdir="$GITHUB_WORKSPACE/turnip_workdir"
-outputdir="$GITHUB_WORKSPACE/output"
-
+workdir="$(pwd)/turnip_workdir"
+magiskdir="$workdir/turnip_module"
 ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
-
 sdkver="34"
-mesasrc="https://github.com/DiskDVD/mesa-tu8"
-srcfolder="A8XX"
+mesasrc="https://github.com/whitebelyash/mesa-tu8"
+srcfolder="mesa"
 
+clear
+
+#There are 4 functions here, simply comment to disable.
+#You can insert your own function and make a pull request.
 run_all(){
 	echo "====== Begin building TU V$BUILD_VERSION! ======"
 	check_deps
 	prepare_workdir
-	build_lib_for_android A8XX
+	build_lib_for_android gen8
+	#build_lib_for_android gen8-yuck
 }
 
 check_deps(){
-	echo "Checking dependencies..."
+	echo "Checking system for required Dependencies ..."
+		for deps_chk in $deps;
+			do
+				sleep 0.25
+				if command -v "$deps_chk" >/dev/null 2>&1 ; then
+					echo -e "$green - $deps_chk found $nocolor"
+				else
+					echo -e "$red - $deps_chk not found, can't countinue. $nocolor"
+					deps_missing=1
+				fi;
+			done
 
-	for deps_chk in $deps; do
-		if command -v "$deps_chk" >/dev/null 2>&1 ; then
-			echo -e "$green - $deps_chk found $nocolor"
-		else
-			echo -e "$red - $deps_chk NOT FOUND $nocolor"
-			exit 1
+		if [ "$deps_missing" == "1" ]
+			then echo "Please install missing dependencies" && exit 1
 		fi
-	done
 
-	pip install mako &> /dev/null
+	echo "Installing python Mako dependency (if missing) ..." $'\n'
+		pip install mako &> /dev/null
 }
 
 prepare_workdir(){
-	mkdir -p "$workdir" "$outputdir"
-	cd "$workdir"
+	echo "Preparing work directory ..." $'\n'
+		mkdir -p "$workdir" && cd "$_"
 
-	echo "Downloading NDK..."
-	curl -L https://dl.google.com/android/repository/"$ndkver"-linux.zip -o ndk.zip
-	unzip -q ndk.zip
+	echo "Downloading android-ndk from google server ..." $'\n'
+		curl https://dl.google.com/android/repository/"$ndkver"-linux.zip --output "$ndkver"-linux.zip &> /dev/null
+	echo "Exracting android-ndk ..." $'\n'
+		unzip "$ndkver"-linux.zip &> /dev/null
 
-	echo "Cloning mesa..."
-	git clone $mesasrc --depth=1 $srcfolder
-	cd $srcfolder
-
-	echo "#define TUGEN8_DRV_VERSION \"v$BUILD_VERSION\"" > ./src/freedreno/vulkan/tu_version.h
+	echo "Downloading mesa source ..." $'\n'
+		git clone $mesasrc --depth=1 --no-single-branch $srcfolder
+		cd $srcfolder
+	echo "Pushing TU_VERSION..."
+		echo "#define TUGEN8_DRV_VERSION \"v$BUILD_VERSION\"" > ./src/freedreno/vulkan/tu_version.h
 }
 
-build_lib_for_android(){
-	echo "==== Building for $1 ===="
-	git checkout origin/$1
 
+build_lib_for_android(){
+	echo "==== Building Mesa on $1 branch ===="
+	git checkout origin/$1
+	#Workaround for using Clang as c compiler instead of GCC
 	mkdir -p "$workdir/bin"
 	ln -sf "$ndk/clang" "$workdir/bin/cc"
 	ln -sf "$ndk/clang++" "$workdir/bin/c++"
-
 	export PATH="$workdir/bin:$ndk:$PATH"
 	export CC=clang
 	export CXX=clang++
+	export AR=llvm-ar
+	export RANLIB=llvm-ranlib
+	export STRIP=llvm-strip
+	export OBJDUMP=llvm-objdump
+	export OBJCOPY=llvm-objcopy
+	export LDFLAGS="-fuse-ld=lld"
 
-	cat <<EOF > android-aarch64.txt
+	echo "Generating build files ..." $'\n'
+		cat <<EOF >"android-aarch64.txt"
 [binaries]
 ar = '$ndk/llvm-ar'
-c = ['$ndk/aarch64-linux-android$sdkver-clang']
-cpp = ['$ndk/aarch64-linux-android$sdkver-clang++']
+c = ['ccache', '$ndk/aarch64-linux-android$sdkver-clang']
+cpp = ['ccache', '$ndk/aarch64-linux-android$sdkver-clang++', '-fno-exceptions', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '--start-no-unused-arguments', '-static-libstdc++', '--end-no-unused-arguments']
+c_ld = '$ndk/ld.lld'
+cpp_ld = '$ndk/ld.lld'
 strip = '$ndk/llvm-strip'
+pkg-config = ['env', 'PKG_CONFIG_LIBDIR=$ndk/pkg-config', '/usr/bin/pkg-config']
 
 [host_machine]
 system = 'android'
@@ -79,58 +98,65 @@ cpu = 'armv8'
 endian = 'little'
 EOF
 
-	meson setup build \
-		--cross-file android-aarch64.txt \
-		--prefix /tmp/turnip \
-		-Dbuildtype=release \
-		-Dstrip=true \
-		-Dplatforms=android \
-		-Dvulkan-drivers=freedreno \
-		-Dfreedreno-kmds=kgsl \
-		-Dplatform-sdk-version=$sdkver
+		cat <<EOF >"native.txt"
+[build_machine]
+c = ['ccache', 'clang']
+cpp = ['ccache', 'clang++']
+ar = 'llvm-ar'
+strip = 'llvm-strip'
+c_ld = 'ld.lld'
+cpp_ld = 'ld.lld'
+system = 'linux'
+cpu_family = 'x86_64'
+cpu = 'x86_64'
+endian = 'little'
+EOF
 
-	ninja -C build install
+		meson setup build-android-aarch64 \
+			--cross-file "android-aarch64.txt" \
+			--native-file "native.txt" \
+			--prefix /tmp/turnip-$1 \
+			-Dbuildtype=release \
+			-Dstrip=true \
+			-Dplatforms=android \
+			-Dvideo-codecs= \
+			-Dplatform-sdk-version="$sdkver" \
+			-Dandroid-stub=true \
+			-Dgallium-drivers= \
+			-Dvulkan-drivers=freedreno \
+			-Dvulkan-beta=true \
+			-Dfreedreno-kmds=kgsl \
+			-Degl=disabled \
+			-Dplatform-sdk-version=36 \
+			-Dandroid-libbacktrace=disabled \
+			--reconfigure
 
-	if ! [ -f /tmp/turnip/lib/libvulkan_freedreno.so ]; then
-		echo -e "$red Build failed $nocolor"
-		exit 1
+	echo "Compiling build files ..." $'\n'
+		ninja -C build-android-aarch64 install
+
+	if ! [ -a /tmp/turnip-$1/lib/libvulkan_freedreno.so ]; then
+		echo -e "$red Build failed! $nocolor" && exit 1
 	fi
-
-	cd /tmp/turnip/lib
-
-	# Явно проверяем, что meta.json создан
-	cat <<EOF > meta.json
+	echo "Making the archive"
+	cd /tmp/turnip-$1/lib
+	cat <<EOF >"meta.json"
 {
   "schemaVersion": 1,
-  "name": "A8XX_Y$BUILD_VERSION",
-  "description": "A8xx support",
-  "author": "whitebelyash / DVD",
+  "name": "A8XX MR v$BUILD_VERSION",
+  "description": "A8xx support MR with A830/A825/A810/A829/UBWC-on-KGSL hacks. Built from $1 branch",
+  "author": "whitebelyash",
   "packageVersion": "1",
   "vendor": "Mesa",
-  "driverVersion": "Vulkan",
+  "driverVersion": "Vulkan 1.4.335",
   "minApi": 28,
   "libraryName": "libvulkan_freedreno.so"
 }
 EOF
-
-	if [ ! -f meta.json ]; then
-		echo -e "$red meta.json was not created $nocolor"
-		exit 1
-	fi
-
-	echo "Packing..."
-	zip "$outputdir/A8XX_Y$BUILD_VERSION.zip" libvulkan_freedreno.so meta.json
-
-	if ! [ -f "$outputdir/A8XX_Y$BUILD_VERSION.zip" ]; then
-		echo -e "$red ZIP FAILED $nocolor"
-		exit 1
-	fi
-
-	# Дополнительная проверка: что архив не пустой и содержит нужные файлы
-	if ! unzip -l "$outputdir/A8XX_Y$BUILD_VERSION.zip" | grep -q "libvulkan_freedreno.so"; then
-		echo -e "$red ZIP archive does not contain libvulkan_freedreno.so $nocolor"
-		exit 1
-	fi
+zip /tmp/a8xx-$1-V$BUILD_VERSION.zip libvulkan_freedreno.so meta.json
+cd -
+if ! [ -a /tmp/a8xx-$1-V$BUILD_VERSION.zip ]; then
+	echo -e "$red Failed to pack the archive! $nocolor"
+fi
 }
 
 run_all
