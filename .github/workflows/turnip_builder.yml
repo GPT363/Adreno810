@@ -28,8 +28,24 @@ jobs:
     - name: Execute build script
       run: bash ./turnip_builder.sh
 
-    - name: List files in /tmp
-      run: ls -la /tmp/*.zip || echo "No zip files found"
+    - name: Find and prepare zip artifact
+      id: find_zip
+      run: |
+        echo "🔍 Searching for zip archives in /tmp..."
+        ZIP_FILE=$(find /tmp -maxdepth 1 -name "*.zip" -type f | head -n 1)
+        
+        if [ -z "$ZIP_FILE" ]; then
+          echo "❌ Error: No zip file found in /tmp"
+          echo "Contents of /tmp:"
+          ls -la /tmp/
+          exit 1
+        fi
+        
+        echo "✅ Found zip: $ZIP_FILE"
+        ls -lh "$ZIP_FILE"
+        
+        cp "$ZIP_FILE" /tmp/turnip_release.zip
+        echo "zip_path=/tmp/turnip_release.zip" >> $GITHUB_OUTPUT
 
     - name: Release "turnip"
       uses: softprops/action-gh-release@v2
@@ -37,7 +53,7 @@ jobs:
         tag_name: tu_v${{ inputs.version }}
         name: Turnip A8XX_T v${{ inputs.version }}
         body: |
-          Turnip TU8 — Fork of whitebelyashx’s Repository with Adreno 8XX Patches
+          Turnip TU8 — Fork of whitebelyashx's Repository with Adreno 8XX Patches
 
           This release is a custom fork of the original work by whitebelyashx, extended with additional patches and optimizations specifically targeted at Adreno 810.
           The build is still in beta testing, and stability may vary depending on the device.
@@ -50,7 +66,9 @@ jobs:
           • Adreno 829/825 — They may work, but not guaranteed.
 
           📝 Changes
-          
+          • VSC buffer optimizations for Adreno 810
+          • GMEM optimizations
+          • Stability improvements
 
           ⚠️ Notes
           • If you see black artifacts, disable DXVK_HUD=0
@@ -59,4 +77,4 @@ jobs:
           • For sysmem mode: export TU_DEBUG=sysmem
 
         files: |
-          /tmp/A8XX_T-V${{ inputs.version }}.zip
+          /tmp/turnip_release.zip
