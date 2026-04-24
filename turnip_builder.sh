@@ -98,6 +98,7 @@ EOF
 
 	cd /tmp/turnip/lib
 
+	# Явно проверяем, что meta.json создан
 	cat <<EOF > meta.json
 {
   "schemaVersion": 1,
@@ -112,11 +113,22 @@ EOF
 }
 EOF
 
+	if [ ! -f meta.json ]; then
+		echo -e "$red meta.json was not created $nocolor"
+		exit 1
+	fi
+
 	echo "Packing..."
 	zip "$outputdir/A8XX_Y$BUILD_VERSION.zip" libvulkan_freedreno.so meta.json
 
 	if ! [ -f "$outputdir/A8XX_Y$BUILD_VERSION.zip" ]; then
 		echo -e "$red ZIP FAILED $nocolor"
+		exit 1
+	fi
+
+	# Дополнительная проверка: что архив не пустой и содержит нужные файлы
+	if ! unzip -l "$outputdir/A8XX_Y$BUILD_VERSION.zip" | grep -q "libvulkan_freedreno.so"; then
+		echo -e "$red ZIP archive does not contain libvulkan_freedreno.so $nocolor"
 		exit 1
 	fi
 }
