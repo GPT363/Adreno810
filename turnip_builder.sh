@@ -10,8 +10,8 @@ magiskdir="$workdir/turnip_module"
 ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
-mesasrc="https://github.com/whitebelyash/mesa-tu8"
-srcfolder="mesa"
+mesasrc="https://github.com/DiskDVD/mesa-tu8"
+srcfolder="A8XX"
 
 clear
 
@@ -21,8 +21,8 @@ run_all(){
 	echo "====== Begin building TU V$BUILD_VERSION! ======"
 	check_deps
 	prepare_workdir
-	build_lib_for_android gen8
-	#build_lib_for_android gen8-yuck
+	build_lib_for_android A8XX
+	
 }
 
 check_deps(){
