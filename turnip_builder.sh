@@ -10,8 +10,8 @@ magiskdir="$workdir/turnip_module"
 ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
-mesasrc="https://github.com/whitebelyash/mesa-tu8"
-srcfolder="mesa"
+mesasrc="https://github.com/DiskDVD/mesa-tu8"
+srcfolder="A8XX"
 
 clear
 
@@ -21,7 +21,7 @@ run_all(){
 	echo "====== Begin building TU V$BUILD_VERSION! ======"
 	check_deps
 	prepare_workdir
-	build_lib_for_android gen8
+	build_lib_for_android A8XX
 	#build_lib_for_android gen8-yuck
 }
 
@@ -142,9 +142,9 @@ EOF
 	cat <<EOF >"meta.json"
 {
   "schemaVersion": 1,
-  "name": "A8XX MR v$BUILD_VERSION",
-  "description": "A8xx support MR with A830/A825/A810/A829/UBWC-on-KGSL hacks. Built from $1 branch",
-  "author": "whitebelyash",
+  "name": "A8XX_Y$BUILD_VERSION",
+  "description": "A8xx support  with A830/A825/A810/A829",
+  "author": "whitebelyash / DVD",
   "packageVersion": "1",
   "vendor": "Mesa",
   "driverVersion": "Vulkan 1.4.335",
@@ -154,7 +154,7 @@ EOF
 EOF
 zip /tmp/a8xx-$1-V$BUILD_VERSION.zip libvulkan_freedreno.so meta.json
 cd -
-if ! [ -a /tmp/a8xx-$1-V$BUILD_VERSION.zip ]; then
+if ! [ -a /tmp/A8XX_Y$BUILD_VERSION.zip ]; then
 	echo -e "$red Failed to pack the archive! $nocolor"
 fi
 }
