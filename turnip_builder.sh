@@ -15,8 +15,6 @@ srcfolder="A8XX"
 
 clear
 
-#There are 4 functions here, simply comment to disable.
-#You can insert your own function and make a pull request.
 run_all(){
     echo "====== Begin building TU V$BUILD_VERSION! ======"
     check_deps
@@ -153,8 +151,7 @@ EOF
 }
 EOF
 
-    # Исправление: используем ту же переменную BUILD_VERSION
-    ZIP_NAME="/tmp/a8xx-$1-V${BUILD_VERSION}.zip"
+    ZIP_NAME="/tmp/A8XX-Y${BUILD_VERSION}.zip"
     zip "$ZIP_NAME" libvulkan_freedreno.so meta.json
     
     echo "✅ Archive created at: $ZIP_NAME"
