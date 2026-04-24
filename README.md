@@ -108,6 +108,8 @@ Huge thanks to: https://t.me/hardwareunion
 4) Ivan Romashin developer/tester
 
  (+) Whitebeliash for your help and responsiveness! (+)
+
+ 
 #THANKS TESTERS!
 1) IkoI5v (A829)
 2) Whitedevil2427 (A829)
