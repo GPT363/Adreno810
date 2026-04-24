@@ -1,87 +1,62 @@
-name: Build Turnip
+name: Build "turnip"
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: Version
+        description: 'Version to build'
         required: true
         type: string
 
 jobs:
-  build:
+  start_building_turnip:
     runs-on: ubuntu-24.04
-
     env:
       BUILD_VERSION: ${{ inputs.version }}
-
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
-      - name: Install deps
-        run: |
-          sudo apt update
-          sudo apt install -y \
-            build-essential flex bison zip unzip curl \
-            meson ninja-build python3-pip \
-            glslang-tools
+    - name: Prepare environment
+      run: |
+        sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+        sudo apt update
+        sudo apt install build-essential flex bison glslang-tools
+        sudo apt install meson-1.5 
 
-      - name: Build
-        run: bash ./turnip_builder.sh
+    - name: Execute build script
+      run: bash ./turnip_builder.sh
 
-      - name: Show files (debug)
-        run: ls -lah output
+    - name: Release "turnip"
+      uses: softprops/action-gh-release@v1
+      with:
+        body: |
+          A8XX Turnip Vulkan V${{ inputs.version }}
+          Built from: https://github.com/whitebelyash/mesa-tu8.
+          
+          I didn't test this this much. Contact me on FEX (#android-wastelands) or EmuCore discord if there are any issues.
 
-      - name: Upload artifact (backup)
-        uses: actions/upload-artifact@v4
-        with:
-          name: turnip-build
-          path: output/*.zip
+          
+          >[!WARNING]
+          > Please don't report issues to Mesa, PLEASE
+                    
+          Supported GPUs:
+          * Adreno 8XX Family: 840, 830, 829, 825, 810
+          * Adreno 7XX Family: any GPU supported by the upstream Turnip + 710/720 from Termux patches
+          * Adreno 6XX Family: any GPU supported by the upstream Turnip
+          
+          GPUs other than 830/840 can have reduced performance and/or more glitches. Can't do anything about that, sorry!  
+          Adreno 810 is additionally very slow, I'm not sure if you even want to use Turnip there
+          
+          Files:
+          * gen8 - main branch (upstream MR + hacks applied)
+          
+          Notes:
+          * Disable DXVK_HUD if you see weird black artifacts
+          * Apparently there are swizzling glitches in Eden & maybe other emulators, try increasing render scale(?)
+          * Some games may require AMD/NVIDIA GPU to run and refuse to start on Qualcomm or block some features. I've included a patch to spoof as Steam Deck - use `TU_DEBUG=deck_emu`
+          * GMEM rendering produces glitchy picture on A830 (write page faults), disable it with `TU_DEBUG=sysmem`. It's pretty much useless for PC emulation anyway.
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: tu_y${{ inputs.version }}
-          name: A8XX_Y${{ inputs.version }}
-          files: output/*.zip
-          body: |
-            A8XX Turnip Vulkan V${{ inputs.version }}
-            Built from: https://github.com/DiskDVD/mesa-tu8
-
-            Turnip TU8 — Fork of whitebelyashx's Repository with Adreno 8XX Patches
-
-            This release is a custom fork of the original work by whitebelyashx, extended with additional patches and optimizations specifically targeted at Adreno 810/829.
-            The build is still in beta testing, and stability may vary depending on the device.
-            Please do not report any issues to Mesa, as this is an unofficial fork.
-
-            💿 Interlayer:
-            1) proton-10arm64ec or proton-11arm64ec
-            2) Rendering mode: DXVK 2.4.1 or newer / VKD3D 2.14 or newer
-            3) Memory type: Autotuner or sysmem
-            4) Permission: Depends on the game
-
-            🖥 Supported GPU:
-            • Adreno 840 — working
-            • Adreno 830 — recommended sysmem
-            • Adreno 829/825 — fully working
-            • Adreno 810 — fully working
-
-            Notes:
-            - A810/829 have exclusive patches
-            - For RDR2 on A810/829 use: TU_DEBUG = nolrz
-
-            Changes:
-            - Initial release / improvements / fixes
-
-            Credits:
-            whitebelyash (Main developer)
-            DerixSpace
-            Lebron
-            Whitedevil2427
-            Ikol5v
-            Michael
-            Driver community
-
-            Contacts:
-            Telegram: @DISK_DVD
-            Discord: EmuCore
+        tag_name: tu_v${{ inputs.version }}
+        name: Turnip A8XX v${{ inputs.version }}
+        files: |
+           /tmp/a8xx-gen8-V${{ inputs.version }}.zip
