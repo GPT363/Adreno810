@@ -1,77 +1,87 @@
-name: Build "turnip"
+name: Build Turnip
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to build'
+        description: Version
         required: true
         type: string
 
 jobs:
-  start_building_turnip:
+  build:
     runs-on: ubuntu-24.04
+
     env:
       BUILD_VERSION: ${{ inputs.version }}
+
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Prepare environment
-      run: |
-        sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
-        sudo apt update
-        sudo apt install -y build-essential flex bison glslang-tools
-        sudo apt install -y meson-1.5
+      - name: Install deps
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential flex bison zip unzip curl \
+            meson ninja-build python3-pip \
+            glslang-tools
 
-    - name: Execute build script
-      run: bash ./turnip_builder.sh
+      - name: Build
+        run: bash ./turnip_builder.sh
 
-    - name: Release "turnip"
-      uses: softprops/action-gh-release@v2
-      with:
-        body: |
-          A8XX Turnip Vulkan V${{ inputs.version }}
-          Built from: https://github.com/DiskDVD/mesa-tu8.
+      - name: Show files (debug)
+        run: ls -lah output
 
-          Turnip TU8 — Fork of whitebelyashx's Repository with Adreno 8XX Patches
+      - name: Upload artifact (backup)
+        uses: actions/upload-artifact@v4
+        with:
+          name: turnip-build
+          path: output/*.zip
 
-          This release is a custom fork of the original work by whitebelyashx, extended with additional patches and optimizations specifically targeted at Adreno 810/829.
-          The build is still in beta testing, and stability may vary depending on the device.
-          Please do not report any issues to Mesa, as this is an unofficial fork.
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: tu_y${{ inputs.version }}
+          name: A8XX_Y${{ inputs.version }}
+          files: output/*.zip
+          body: |
+            A8XX Turnip Vulkan V${{ inputs.version }}
+            Built from: https://github.com/DiskDVD/mesa-tu8
 
-          💿 Interlayer:
-          1) proton-10arm64ec or proton-11arm64ec
-          2) Rendering mode: DXVK 2.4.1 or then gradually increase until the last / VKD3D 2.14 or VKD3D 3.0b
-          3) Memory type: Autotuner, or sysmem
-          4) Permission: Depends on the game
+            Turnip TU8 — Fork of whitebelyashx's Repository with Adreno 8XX Patches
 
-          🖥 Supported GPU
-          • Full work Adreno 8xx
-          • Adreno 810/829 have exclusive patches
-          If you play RDR 2 on A810/829 please use: TU_DEBUG = nolrz
-          • Adreno 840 work.
-          • Adreno 830 work, recommended use sysmem, but you can try autotuner.
-          • Adreno 829/825 Full working, tested (Gmem/Sysmem)
-          • Adreno 810 Full working, tested (Gmem/Sysmem)
+            This release is a custom fork of the original work by whitebelyashx, extended with additional patches and optimizations specifically targeted at Adreno 810/829.
+            The build is still in beta testing, and stability may vary depending on the device.
+            Please do not report any issues to Mesa, as this is an unofficial fork.
 
-          (-) Changes:
+            💿 Interlayer:
+            1) proton-10arm64ec or proton-11arm64ec
+            2) Rendering mode: DXVK 2.4.1 or newer / VKD3D 2.14 or newer
+            3) Memory type: Autotuner or sysmem
+            4) Permission: Depends on the game
 
-          I would like to express my gratitude to the TG group:
-            https://t.me/hardwareunion
+            🖥 Supported GPU:
+            • Adreno 840 — working
+            • Adreno 830 — recommended sysmem
+            • Adreno 829/825 — fully working
+            • Adreno 810 — fully working
 
-          And also special thanks to:
-          Whitebeliash (Main developer) Thank you so much! You are clearly the best!
-          DerixSpace (developer)
-          Lebron (Project organizer)
-          Whitedevil2427 P.C. We are waiting for you! (Main tester A829)
-          Ikol5v (Main tester A829)
-          Michael (Chief Assistant to the organizer)
-          And to the driver community
+            Notes:
+            - A810/829 have exclusive patches
+            - For RDR2 on A810/829 use: TU_DEBUG = nolrz
 
-          If you encounter any banking or banking problems, please write to me:
-          Telegram: @DISK_DVD
-          Or find me in the Discord community: EmuCore
-        tag_name: tu_y${{ inputs.version }}
-        name: A8XX_Y${{ inputs.version }}
-        files: |
-          /tmp/A8XX_Y${{ inputs.version }}.zip
+            Changes:
+            - Initial release / improvements / fixes
+
+            Credits:
+            whitebelyash (Main developer)
+            DerixSpace
+            Lebron
+            Whitedevil2427
+            Ikol5v
+            Michael
+            Driver community
+
+            Contacts:
+            Telegram: @DISK_DVD
+            Discord: EmuCore
