@@ -2,9 +2,8 @@
 
 A modified build of Mesa Turnip with improved support for **Adreno 8XX**
 
-The goal of this project is to improve stability and compatibility of Turnip on Adreno 8XX,  
-where standard freedreno does not yet provide full functionality.
 
+This repository is now focused on experimental hacks/patches, during which your rendering may drop or artifacts may appear, or your FPS may increase, so do not consider the repository if stability is important to you
 ---
 
 ## 🔥 About the Project
@@ -14,11 +13,11 @@ This repository is based on:
 - https://github.com/whitebelyash/freedreno_turnip-Cl  
 
 The **turnip/gen8** branch already contains basic Adreno 8XX support.  
-We task is to improve stability, fix rendering issues, and adapt the driver for real devices.
+
 
 This is an **unofficial night builds** created by an enthusiast.  
 The code may contain experimental changes.
-
+All changes occurring in this repository are EXPERIMENTAL, this does not make them 100% working, if you need stability it is better to use the driver from Whitebeliash.
 ---
 
 ## ⚠️ Status
