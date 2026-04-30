@@ -10,7 +10,7 @@ magiskdir="$workdir/turnip_module"
 ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
-mesasrc="https://github.com/DiskDVD/mesa-tu8"
+mesasrc="https://github.com/DiskDVD/A8XX-Y"
 srcfolder="A8XX"
 
 clear
@@ -140,7 +140,7 @@ EOF
     cat <<EOF >"meta.json"
 {
   "schemaVersion": 1,
-  "name": "A8XX MR v$BUILD_VERSION",
+  "name": "A8XX-Y$BUILD_VERSION",
   "description": "A8XX supported",
   "author": "whitebelyash / DVD",
   "packageVersion": "1",
