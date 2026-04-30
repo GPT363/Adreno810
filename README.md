@@ -10,13 +10,13 @@ where standard freedreno does not yet provide full functionality.
 ## 🔥 About the Project
 
 This repository is based on:
-- https://github.com/whitebelyash/mesa-tu8  
+- https://github.com/whitebelyash/mesa-unified/tree/turnip/gen8
 - https://github.com/whitebelyash/freedreno_turnip-Cl  
 
-The **whitebelyash/gen8** branch already contains basic Adreno 8XX support.  
+The **turnip/gen8** branch already contains basic Adreno 8XX support.  
 We task is to improve stability, fix rendering issues, and adapt the driver for real devices.
 
-This is an **unofficial fork** created by an enthusiast.  
+This is an **unofficial night builds** created by an enthusiast.  
 The code may contain experimental changes.
 
 ---
@@ -92,8 +92,8 @@ Do not file bug reports in official Mesa repositories — this is an unofficial 
 
 ---
 
-source code location:
-https://github.com/DiskDVD/mesa-tu8
+**source code location:**
+https://github.com/DiskDVD/A8XX-Y
 
 ---
 
@@ -102,22 +102,17 @@ https://github.com/DiskDVD/mesa-tu8
 
 Huge thanks to: https://t.me/hardwareunion
 
+**Whitebeliash Thanks for supporting 8 series**
+
 1) DeriSpace developer/tester
 2) Lebron Project Manager 
 3) Михаил Assistant
-4) Ivan Romashin developer/tester
 
- (+) Whitebeliash for your help and responsiveness! (+)
-
- 
 #THANKS TESTERS!
 1) IkoI5v (A829)
-2) Whitedevil2427 (A829)
 3) TXT (A830)
 4) DeriSpace (A829)
 5) Frane  (A810)
-6) Ivan Romashin (A825)
-7) My (A810)
 
 
 - whitebelyash — for the TU8 base and gen8 support  
