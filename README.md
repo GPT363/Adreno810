@@ -111,7 +111,7 @@ Huge thanks to: https://t.me/hardwareunion
 1) IkoI5v (A829)
 3) TXT (A830)
 4) DeriSpace (A829)
-5) Frane  (A810)
+5) Whitedevil2427 (A829)
 
 
 - whitebelyash — for the TU8 base and gen8 support  
