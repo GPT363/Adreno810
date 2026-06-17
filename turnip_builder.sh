@@ -4,7 +4,6 @@
 # Название: A8XX-Y Build Script
 # Автор: whitebelyash / DVD
 # Описание: Сборка Vulkan драйвера Turnip для A8XX
-# Версия: 1.0
 # ============================================
 
 #Define variables
