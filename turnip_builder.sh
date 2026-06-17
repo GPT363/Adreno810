@@ -17,7 +17,7 @@ ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
 mesasrc="https://github.com/DiskDVD/A8XX-Y"
-srcfolder="A8XX"
+srcfolder="Haks"
 driver_name="A8XX-Y"
 
 # Проверка наличия BUILD_VERSION
@@ -44,7 +44,7 @@ run_all(){
     echo ""
     check_deps
     prepare_workdir
-    build_lib_for_android A8XX
+    build_lib_for_android Haks
 }
 
 check_deps(){
