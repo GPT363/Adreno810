@@ -28,6 +28,23 @@ jobs:
     - name: Execute build script
       run: bash ./turnip_builder.sh
 
+    - name: List files in /tmp (debug)
+      run: |
+        echo "Files in /tmp:"
+        ls -la /tmp/*.zip 2>/dev/null || echo "No zip files found in /tmp"
+        echo ""
+        echo "Files in workdir:"
+        ls -la turnip_workdir/*.zip 2>/dev/null || echo "No zip files found in turnip_workdir"
+
+    - name: Upload artifact (debug)
+      uses: actions/upload-artifact@v4
+      with:
+        name: turnip-driver
+        path: |
+          /tmp/A8XX-Y*.zip
+          turnip_workdir/A8XX-Y*.zip
+        if-no-files-found: warn
+
     - name: Release "turnip"
       uses: softprops/action-gh-release@v2
       with:
@@ -75,4 +92,6 @@ jobs:
           Or find me in the Discord community: EmuCore
 
         files: |
-          /tmp/A8XX-Y${{ inputs.version }}.zip
+          /tmp/A8XX-Y*.zip
+          turnip_workdir/A8XX-Y*.zip
+        fail_on_unmatched_files: false
