@@ -17,7 +17,7 @@ ndkver="android-ndk-r29"
 ndk="$workdir/$ndkver/toolchains/llvm/prebuilt/linux-x86_64/bin"
 sdkver="34"
 mesasrc="https://github.com/DiskDVD/A8XX-Y"
-srcfolder="Haks"
+srcfolder="A8XX"
 driver_name="A8XX-Y"
 
 # Проверка наличия BUILD_VERSION
@@ -29,7 +29,6 @@ fi
 
 clear
 
-# Функция вывода баннера
 show_banner(){
     echo -e "${green}╔══════════════════════════════════════════════════════════╗${nocolor}"
     echo -e "${green}║         A8XX-Y Vulkan Driver Builder v${BUILD_VERSION}          ║${nocolor}"
@@ -44,7 +43,7 @@ run_all(){
     echo ""
     check_deps
     prepare_workdir
-    build_lib_for_android Haks
+    build_lib_for_android A8XX
 }
 
 check_deps(){
