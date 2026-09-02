@@ -39,6 +39,7 @@ This is just an attempt (possibly unsuccessful 🙂)
 | GPU | Status |
 |-----|--------|
 | Adreno 810 | supported |
+| Adreno 812 | supported |
 | Adreno 830 | supported |
 | Adreno 840 | supported |
 | Adreno 829 / 825 | supported |
